@@ -1,33 +1,31 @@
 # Contributing
 
-`pyairkorea`는 API shape가 바뀌어도 사용자가 덜 흔들리도록 하는 작은 라이브러리입니다. 기여할 때는 구현보다 회귀 방지를 조금 더 중요하게 봅니다.
+기여는 환영합니다. 이 프로젝트는 AirKorea OpenAPI 특성상 endpoint 철자와 응답 shape가 흔들릴 수 있으므로 테스트와 문서를 함께 갱신하는 방식을 권장합니다.
 
 ## 개발 환경
 
 ```bash
-python -m venv .venv
 pip install -e ".[dev]"
 ```
 
-## 변경 전 체크
+## 변경 절차
 
-- 새 endpoint라면 `airkorea-api.md`에 먼저 범위와 응답 필드를 정리합니다.
-- 기존 버그라면 재현 테스트를 먼저 추가합니다.
-- 실제 API 응답을 저장할 때는 인증키와 개인 위치 정보를 제거합니다.
+1. 공식 공공데이터포털 문서 또는 실제 게이트웨이 응답으로 endpoint와 파라미터를 확인합니다.
+2. `pyairkorea/client.py`에 public method와 parser를 추가합니다.
+3. `pyairkorea/models.py`에 필요한 dataclass를 추가합니다.
+4. `tests/`에 fixture 기반 테스트를 추가합니다.
+5. `airkorea-api.md`, `docs/implementation-status.md`, `docs/repeated-mistakes.md`를 갱신합니다.
 
-## 제출 전 검증
+## 검증
 
 ```bash
 python -m compileall pyairkorea tests
 python -m pytest
-ruff check .
-mypy pyairkorea
+python -m pytest --cov=pyairkorea --cov-fail-under=90
+python -m ruff check .
+python -m mypy pyairkorea
 ```
 
-## 문서 업데이트
+## Live API 테스트
 
-- 사용법이 바뀌면 `README.md`
-- API 규칙이 바뀌면 `airkorea-api.md`
-- 테스트 정책이 바뀌면 `docs/testing.md`
-- 같은 실수를 막고 싶으면 `docs/repeated-mistakes.md`
-- 사용자 오류 대응이 늘면 `docs/troubleshooting.md`
+실제 AirKorea 호출 테스트는 기본 테스트에 넣지 않습니다. 필요한 경우 `@pytest.mark.integration`을 사용하고 `AIRKOREA_SERVICE_KEY`가 없으면 skip하세요.

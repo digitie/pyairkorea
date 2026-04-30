@@ -1,85 +1,59 @@
-# Troubleshooting
+# 문제 해결
 
-## `AirKoreaAuthError: SERVICE_KEY...`
+## 인증 오류
 
-가능한 원인:
+증상:
 
-- 공공데이터포털 활용신청이 아직 승인되지 않음
-- 대기오염정보와 측정소정보 중 하나만 신청함
-- Encoding 키를 `params=`로 넘겨 다시 인코딩됨
-- Decoding 키가 필요한 게이트웨이에 Encoding 키를 사용함
-
-점검:
-
-```python
-from pyairkorea import AirKoreaClient
-
-air = AirKoreaClient("디코딩키")
-air.stations(addr="서울", num_of_rows=1)
-```
-
-Decoding 키가 실패하면 Encoding 키도 한 번 확인합니다. 공공데이터포털 게이트웨이 쪽 키 처리 방식이 시점에 따라 달라질 수 있습니다.
-
-## `AirKoreaNoDataError`
-
-가능한 원인:
-
-- 측정소명이 정확하지 않음
-- `dataTerm` 범위 안에 데이터가 없음
-- 예보통보 `searchDate` 또는 `InformCode` 조건이 너무 좁음
-- API 신청 또는 운영계정 권한이 endpoint와 맞지 않음
+- `AirKoreaAuthError`
+- `SERVICE_KEY_IS_NOT_REGISTERED_ERROR`
+- HTTP 401/403
 
 점검:
 
-- `air.stations(station_name="종로구")`로 실제 측정소명을 먼저 확인
-- `num_of_rows`를 늘려 확인
-- `forecast_notices()`를 조건 없이 호출해 최근 목록 shape만 확인
+- 공공데이터포털에서 해당 OpenAPI 활용신청이 승인됐는지 확인한다.
+- Encoding 키와 Decoding 키를 모두 시도한다.
+- `AIRKOREA_SERVICE_KEY`에 공백이나 따옴표가 섞이지 않았는지 확인한다.
+- `UserSportSvc/getSvckeyDalyStats`는 `ServiceKey` 대문자 파라미터를 사용한다.
 
-## 가까운 측정소가 이상함
+## 데이터 없음
 
-가능한 원인:
+증상:
 
-- `tmX`, `tmY`에 위도/경도를 그대로 넣음
-- 도로명주소 API 좌표를 변환해서 이중 변환함
-- AirKorea legacy TM과 도로명주소 API 좌표 버전을 혼동함
-
-점검:
-
-```python
-air.nearby_stations(lat=37.5665, lon=126.9780)
-```
-
-도로명주소 API 좌표를 이미 가지고 있다면:
-
-```python
-air.nearby_stations(tm_x=945959.1814, tm_y=1953851.96028, ver="1")
-```
-
-## `AirKoreaParseError`
-
-가능한 원인:
-
-- JSON이 아닌 XML/HTML이 반환됨
-- API 응답 shape가 변경됨
-- 숫자 필드에 예상하지 못한 문자열이 들어옴
+- `AirKoreaNoDataError`
+- 빈 list
 
 점검:
 
-- 같은 호출을 `returnType=json`으로 직접 확인
-- raw response를 저장할 때 인증키를 반드시 제거
-- 재현 fixture를 추가하고 parser 테스트부터 작성
+- 조회 날짜, 측정소명, 시도명, pollutant code가 실제로 존재하는지 확인한다.
+- 실시간 API는 측정소 상태에 따라 특정 시간대 데이터가 없을 수 있다.
+- 경보/주의보 API는 해당 기간에 발령 이력이 없으면 비어 있을 수 있다.
 
-## PowerShell에서 한글이 깨져 보임
+## 파싱 오류
 
-가능한 원인:
+증상:
 
-- 콘솔 출력 인코딩이 CP949라 UTF-8 JSON이 mojibake로 표시됨
+- `AirKoreaParseError`
 
 점검:
 
-```powershell
-$env:PYTHONIOENCODING="utf-8"
-pyairkorea station --station-name 종로구
-```
+- 포털이 JSON 대신 XML/HTML 오류를 반환했는지 확인한다.
+- 신규 필드명이 확인되면 parser와 fixture 테스트를 함께 추가한다.
+- `raw` 필드에 원본 응답이 보존되므로 먼저 원본 키를 확인한다.
 
-파일 자체는 UTF-8로 유지하고, 테스트에서는 실제 한국어 문자열을 비교합니다.
+## 좌표가 이상함
+
+점검:
+
+- `stations()`의 `dmX`, `dmY`는 위도/경도로 노출된다.
+- `nearby_stations()`는 TM 좌표를 요구한다.
+- 위도/경도만 있다면 `nearby_stations(lat=..., lon=...)`를 사용한다.
+- 이미 AirKorea TM 좌표가 있다면 `nearby_stations(tm_x=..., tm_y=..., ver="1")`처럼 직접 넘긴다.
+
+## Endpoint 404
+
+점검:
+
+- `getCtprvnMesureLIst`와 `getCtprvnMesureSidoLIst`의 `LIst` 대소문자를 바꾸지 않는다.
+- 월평균은 `getMsrstnAcctoRMmrg`다.
+- 영문 서비스는 `atmstMsrstnRltmInfo/getList`, `atmstMsrstnInfoEngNm/getList`다.
+- `pyairkorea.client.SUPPORTED_ENDPOINTS`와 [airkorea-api.md](../airkorea-api.md)를 먼저 확인한다.

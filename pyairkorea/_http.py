@@ -58,10 +58,19 @@ class HttpClient:
         base_url: str,
         endpoint: str,
         params: Mapping[str, Any],
+        *,
+        service_key_param: str = "serviceKey",
+        format_param: str = "returnType",
+        format_value: str = "json",
     ) -> Mapping[str, Any]:
         response = self._request(
             f"{base_url.rstrip('/')}/{endpoint.lstrip('/')}",
-            self._params(params),
+            self._params(
+                params,
+                service_key_param=service_key_param,
+                format_param=format_param,
+                format_value=format_value,
+            ),
         )
         try:
             payload = response.json()
@@ -93,10 +102,17 @@ class HttpClient:
 
         raise AirKoreaNetworkError(str(last_error) if last_error else "request failed")
 
-    def _params(self, params: Mapping[str, Any]) -> dict[str, Any]:
+    def _params(
+        self,
+        params: Mapping[str, Any],
+        *,
+        service_key_param: str,
+        format_param: str,
+        format_value: str,
+    ) -> dict[str, Any]:
         query: dict[str, Any] = {
-            "serviceKey": self._service_key,
-            "returnType": "json",
+            service_key_param: self._service_key,
+            format_param: format_value,
         }
         for key, value in params.items():
             if value is not None:

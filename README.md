@@ -1,54 +1,38 @@
 # pyairkorea
 
-한국환경공단 AirKorea OpenAPI를 Python에서 편하게 쓰기 위한 비공식 클라이언트 라이브러리입니다.
+한국환경공단 AirKorea OpenAPI를 Python에서 쓰기 쉽게 감싼 비공식 클라이언트입니다.
 
-`pyairkorea`는 공공데이터포털의 `한국환경공단_에어코리아_대기오염정보`와 `한국환경공단_에어코리아_측정소정보` API를 감싸고, 실시간 측정값/측정소/근접 측정소/예보 통보 데이터를 Python dataclass와 네이티브 타입으로 제공합니다.
+`pyairkorea`는 공공데이터포털의 AirKorea 계열 B552584 OpenAPI를 dataclass 기반의 안정적인 Python 객체로 변환합니다. 2026-04-30 기준으로 확인한 AirKorea 대기오염정보, 측정소정보, 통계, 오존/황사, 미세먼지 경보, 사용자 지원, 고농도 PM2.5 예보, CAI, 국가배경농도 합성데이터, 영문 측정정보/측정소정보 서비스를 구현했습니다.
 
-> 공식 포털 기준 수정일은 2026-03-03입니다. 세부 명세와 구현 주의사항은 [airkorea-api.md](airkorea-api.md), 반복 실수 방지는 [docs/repeated-mistakes.md](docs/repeated-mistakes.md)를 참고하세요.
-
----
-
-## 핵심 특징
-
-- **대기오염정보 + 측정소정보 통합**: 측정소별 실시간 측정정보, 시도별 측정정보, 나쁨 이상 측정소, 예보통보, 주간예보, 측정소 목록, 근접 측정소, TM 기준좌표를 한 클라이언트에서 호출합니다.
-- **JSON shape 흔들림 흡수**: AirKorea 응답의 `body.items`가 list로 오거나 `items.item`으로 오거나 모두 처리합니다.
-- **Python 타입 변환**: 숫자 문자열, 등급 코드, 날짜/시간 문자열, 빈 값(`-`, 공백, `null`)을 모델 경계에서 안전하게 변환합니다.
-- **등급 라벨 제공**: `khaiGrade=1..4`를 `좋음`, `보통`, `나쁨`, `매우나쁨` 라벨로 함께 제공합니다.
-- **WGS84 -> AirKorea TM 변환**: 위도/경도로 가까운 측정소를 찾을 수 있도록 EPSG:2097 기반 변환 헬퍼를 제공합니다.
-- **명확한 예외 계층**: 인증, no-data, 호출제한, 네트워크, 서버, 파싱 오류를 구분합니다.
-- **네트워크 없는 기본 테스트**: API fixture/mock 기반 테스트를 기본으로 두고, 실제 호출은 별도 integration marker로 분리합니다.
-
----
-
-## 시작하기
-
-### 1단계: 인증키 발급
-
-1. [공공데이터포털](https://www.data.go.kr)에 가입하고 로그인합니다.
-2. `한국환경공단_에어코리아_대기오염정보`와 `한국환경공단_에어코리아_측정소정보`에 활용신청합니다.
-3. 발급받은 서비스키를 환경변수로 저장합니다.
+## 설치
 
 ```bash
-export AIRKOREA_SERVICE_KEY="발급받은_디코딩_인증키"
+pip install pyairkorea
 ```
 
-Windows PowerShell:
-
-```powershell
-$env:AIRKOREA_SERVICE_KEY="발급받은_디코딩_인증키"
-```
-
-`pyairkorea`는 `requests.get(..., params=...)`로 호출하므로 보통 **Decoding 인증키** 사용을 권장합니다. 포털 또는 게이트웨이 상태에 따라 Encoding 키가 동작하는 경우도 있으니, 인증 오류가 나면 두 키를 모두 점검하세요.
-
-### 2단계: 설치
-
-개발 중인 로컬 저장소 기준:
+개발 환경:
 
 ```bash
 pip install -e ".[dev]"
 ```
 
-### 3단계: 사용
+## 인증키
+
+공공데이터포털에서 필요한 AirKorea OpenAPI 활용신청을 한 뒤 일반 인증키를 환경변수로 저장합니다.
+
+```bash
+export AIRKOREA_SERVICE_KEY="발급받은_인증키"
+```
+
+PowerShell:
+
+```powershell
+$env:AIRKOREA_SERVICE_KEY="발급받은_인증키"
+```
+
+`requests.get(..., params=...)`로 호출하므로 보통 Decoding 인증키 사용을 권장합니다. 인증 오류가 나면 Encoding/Decoding 키를 모두 확인하세요.
+
+## 빠른 사용
 
 ```python
 from pyairkorea import AirKoreaClient
@@ -63,26 +47,45 @@ for row in air.sido_measurements("서울", num_of_rows=5):
     print(row.station_name, row.pm10_value, row.pm25_value)
 ```
 
-위도/경도로 가까운 측정소를 찾고 최신 측정값을 가져올 수도 있습니다.
+좌표로 가까운 측정소를 찾고 최신 측정값을 가져올 수도 있습니다.
 
 ```python
-nearby = air.nearby_stations(lat=37.5665, lon=126.9780)
-print(nearby[0].station_name, nearby[0].distance_km)
-
 measurement = air.measurement_near(lat=37.5665, lon=126.9780)
 ```
 
-측정소 목록과 예보통보:
+## 지원 API
+
+| 서비스 | 주요 메서드 |
+|---|---|
+| 대기오염정보 | `station_measurements`, `sido_measurements`, `unhealthy_stations`, `forecast_notices`, `weekly_forecasts` |
+| 측정소정보 | `stations`, `nearby_stations`, `tm_coordinates`, `measurement_near` |
+| 대기오염통계 현황 | `sido_average_stats`, `city_average_stats`, `station_daily_stats`, `station_monthly_stats` |
+| 오존황사 발생정보 | `ozone_advisories`, `yellow_dust_advisories` |
+| 미세먼지 경보 발령 현황 | `dust_alarms` |
+| 사용자 지원 | `traffic_stats` |
+| 고농도 초미세먼지(50초과) 예보 정보 | `high_pm25_forecasts` |
+| 통합대기환경지수(CAI) 조회 | `cai_measurements` |
+| 대기오염물질 국가배경농도 합성데이터 | `background_concentrations` |
+| 측정소별 실시간 측정정보 영문 조회 | `english_measurements` |
+| 측정소 영문 정보 조회 | `english_stations` |
+
+전체 endpoint 목록과 정확한 철자는 [airkorea-api.md](airkorea-api.md)를 확인하세요.
+
+## 예시
 
 ```python
-stations = air.stations(addr="서울", station_name="종로구")
-notices = air.forecast_notices(search_date="2026-04-30", inform_code="PM10")
-weekly = air.weekly_forecasts(search_date="2026-04-30")
+from datetime import date
+
+stats = air.sido_average_stats(item_code="PM10", data_gubun="HOUR")
+alarms = air.dust_alarms(2026, item_code="PM25")
+ozone = air.ozone_advisories(year=2026)
+traffic = air.traffic_stats(date(2026, 4, 30))
+english = air.english_stations(station_name="Sangdae")
 ```
 
----
-
 ## CLI
+
+CLI는 자주 쓰는 조회를 중심으로 제공합니다. 전체 API는 Python 클라이언트에서 사용할 수 있습니다.
 
 ```bash
 pyairkorea station --station-name 종로구
@@ -92,34 +95,28 @@ pyairkorea nearby --lat 37.5665 --lon 126.9780
 pyairkorea forecast --search-date 2026-04-30 --inform-code PM10
 ```
 
-출력은 UTF-8 JSON입니다.
-
----
-
-## 개발
+## 개발 검증
 
 ```bash
 python -m compileall pyairkorea tests
 python -m pytest
-ruff check .
-mypy pyairkorea
+python -m pytest --cov=pyairkorea --cov-fail-under=90
+python -m ruff check .
+python -m mypy pyairkorea
 ```
 
-실제 API 호출 테스트는 기본 테스트에 넣지 않습니다. 필요한 경우 `AIRKOREA_SERVICE_KEY`가 있을 때만 `pytest -m integration` 형태로 분리합니다.
-
----
+실제 API 호출 테스트는 기본 테스트에 넣지 않습니다. 네트워크, 인증키, 실시간 데이터 상태가 흔들리기 때문입니다.
 
 ## 문서
 
-- [airkorea-api.md](airkorea-api.md): 구현용 API 명세와 범위
-- [docs/implementation-status.md](docs/implementation-status.md): 구현 상태와 테스트 매트릭스
-- [docs/testing.md](docs/testing.md): 테스트 정책
+- [airkorea-api.md](airkorea-api.md): 공식 API 목록, endpoint, 메서드 매핑
+- [docs/implementation-status.md](docs/implementation-status.md): 구현/테스트 현황
+- [docs/testing.md](docs/testing.md): 테스트 원칙
 - [docs/repeated-mistakes.md](docs/repeated-mistakes.md): 반복 실수 방지 로그
-- [docs/troubleshooting.md](docs/troubleshooting.md): 오류별 점검법
+- [docs/troubleshooting.md](docs/troubleshooting.md): 오류별 점검표
 - [SKILL.md](SKILL.md): 이후 에이전트가 따라야 할 구현 규칙
-- [AGENTS.md](AGENTS.md): 작업 운영 규칙
+- [AGENTS.md](AGENTS.md): 협업/작업 규칙
 
-## 참고
+## 범위
 
-- [한국환경공단_에어코리아_대기오염정보](https://www.data.go.kr/data/15073861/openapi.do)
-- [한국환경공단_에어코리아_측정소정보](https://www.data.go.kr/en/data/15073877/openapi.do)
+이 패키지는 AirKorea 대기질 API 클라이언트입니다. 한국환경공단의 모든 B552584 서비스(비점오염원, 재활용, 냉매 등)를 포함하지 않습니다.

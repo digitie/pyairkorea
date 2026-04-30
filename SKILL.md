@@ -1,37 +1,33 @@
-# pyairkorea Agent Skill
+# pyairkorea 작업 규칙
 
-이 저장소에서 작업하는 에이전트는 아래 규칙을 우선합니다.
+이 저장소를 이어서 작업할 때는 아래 순서를 지킵니다.
 
-## 기본 원칙
+## API 목록 기준
 
-- AirKorea 공식 OpenAPI는 공공데이터포털의 `대기오염정보`와 `측정소정보` 두 서비스군으로 나눈다.
-- 새 endpoint를 추가할 때는 먼저 [airkorea-api.md](airkorea-api.md)에 명세와 변환 정책을 기록한다.
-- 사용자에게 raw AirKorea response shape를 직접 떠넘기지 않는다.
-- 모든 public method는 네트워크 없는 테스트를 먼저 갖는다.
-- bug fix는 실패 테스트, 구현, 문서 업데이트 순서로 진행한다.
+- AirKorea 지원 범위는 `pyairkorea.client.SUPPORTED_ENDPOINTS`가 기준입니다.
+- API 목록을 추가/수정하면 [airkorea-api.md](airkorea-api.md), [docs/implementation-status.md](docs/implementation-status.md), `tests/test_expanded_api.py`를 함께 수정합니다.
+- 공공데이터포털 정적 HTML에 전체 상세기능이 보이지 않을 수 있으므로 공식 페이지, 검색 인덱스, 실제 게이트웨이 응답을 함께 대조합니다.
 
-## 구현 규칙
+## 구현 원칙
 
-- HTTP/result-code 매핑은 `pyairkorea/_http.py`에서만 처리한다.
-- raw 값 변환은 `pyairkorea/_convert.py`에 모은다.
-- code/label/valid parameter는 `pyairkorea/codes.py`에 모은다.
-- 좌표 변환은 `pyairkorea/coords.py`에서만 수행한다.
-- 모델은 `dataclass(frozen=True, slots=True)`를 사용하고 raw record를 `raw`에 보존한다.
-- `body.items`는 list, dict, `items.item` 모두 허용한다.
-- 결측 placeholder인 `-`, 공백, `null`은 `None`으로 변환한다.
-- `dmX`, `dmY`는 모델에서 `lat`, `lon`으로 바꿔 의미를 명확히 한다.
+- public method는 endpoint 하나에 명확히 매핑합니다.
+- 응답 dataclass는 확인된 주요 필드만 파싱하고 `raw`를 항상 보존합니다.
+- 값 변환은 `_convert.py`의 helper를 재사용합니다.
+- 결측값은 `None`으로 보존하고 0으로 바꾸지 않습니다.
+- endpoint 대소문자와 공식 오타처럼 보이는 철자를 임의로 고치지 않습니다.
 
-## 테스트 규칙
+## 테스트 원칙
 
-- 기본 `pytest`는 실 API 호출을 하지 않는다.
-- fake session 또는 fixture로 HTTP를 고정한다.
-- 실제 API 호출은 `integration` marker와 `AIRKOREA_SERVICE_KEY`가 있을 때만 허용한다.
-- parser 변경 시 malformed response 테스트를 반드시 추가한다.
-- 좌표 변경 시 `tests/test_coords.py`와 `docs/repeated-mistakes.md`를 함께 확인한다.
+- 새 public method는 fixture 기반 단위 테스트를 추가합니다.
+- endpoint URL, 파라미터명, 날짜 변환, 모델 필드, 결측값 처리를 assert합니다.
+- 실제 API 호출은 기본 테스트에 넣지 말고 integration marker로 분리합니다.
 
-## 문서 규칙
+## 완료 전 확인
 
-- README는 사용자 관점의 빠른 사용법을 유지한다.
-- `airkorea-api.md`는 구현자가 보는 정확한 명세/주의사항을 유지한다.
-- 반복 실수는 발견 즉시 `docs/repeated-mistakes.md`에 추가한다.
-- 오류 처리나 운영상의 함정은 `docs/troubleshooting.md`에 추가한다.
+```bash
+python -m compileall pyairkorea tests
+python -m pytest
+python -m pytest --cov=pyairkorea --cov-fail-under=90
+python -m ruff check .
+python -m mypy pyairkorea
+```

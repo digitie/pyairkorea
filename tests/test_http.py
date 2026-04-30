@@ -34,6 +34,25 @@ def test_request_adds_common_params() -> None:
     assert session.last_call.params["pageNo"] == 1
 
 
+def test_request_can_override_common_param_names() -> None:
+    session = FakeSession([FakeResponse(json_data=payload([]))])
+    client = HttpClient("decoded-key", session=session, retries=0)
+
+    client.get_body(
+        "https://example.test/base",
+        "endpoint",
+        {},
+        service_key_param="ServiceKey",
+        format_param="type",
+        format_value="JSON",
+    )
+
+    assert session.last_call.params["ServiceKey"] == "decoded-key"
+    assert session.last_call.params["type"] == "JSON"
+    assert "serviceKey" not in session.last_call.params
+    assert "returnType" not in session.last_call.params
+
+
 def test_missing_service_key_is_auth_error() -> None:
     with pytest.raises(AirKoreaAuthError):
         HttpClient("")

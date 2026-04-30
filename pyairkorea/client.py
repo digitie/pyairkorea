@@ -24,16 +24,86 @@ from pyairkorea.codes import (
 from pyairkorea.coords import wgs84_to_tm
 from pyairkorea.exceptions import AirKoreaParseError
 from pyairkorea.models import (
+    AdvisoryOccurrence,
     AirQualityMeasurement,
+    AirQualityStat,
+    BackgroundConcentration,
+    CaiMeasurement,
+    DustAlarm,
+    EnglishAirQualityMeasurement,
+    EnglishStation,
     ForecastNotice,
+    HighPm25Forecast,
     NearbyStation,
     Station,
     TmCoordinate,
+    TrafficStat,
     WeeklyForecastNotice,
 )
 
 DEFAULT_POLLUTION_BASE_URL = "http://apis.data.go.kr/B552584/ArpltnInforInqireSvc"
 DEFAULT_STATION_BASE_URL = "http://apis.data.go.kr/B552584/MsrstnInfoInqireSvc"
+DEFAULT_STATS_BASE_URL = "http://apis.data.go.kr/B552584/ArpltnStatsSvc"
+DEFAULT_OCCURRENCE_BASE_URL = "http://apis.data.go.kr/B552584/OzYlwsndOccrrncInforInqireSvc"
+DEFAULT_ALARM_BASE_URL = "http://apis.data.go.kr/B552584/UlfptcaAlarmInqireSvc"
+DEFAULT_USER_SUPPORT_BASE_URL = "http://apis.data.go.kr/B552584/UserSportSvc"
+DEFAULT_HIGH_PM25_FORECAST_BASE_URL = "http://apis.data.go.kr/B552584/MinuDustFrcstDspthSvc"
+DEFAULT_CAI_BASE_URL = "http://apis.data.go.kr/B552584/RltmKhaiInfoSvc"
+DEFAULT_BACKGROUND_BASE_URL = "http://apis.data.go.kr/B552584/arpltsNtnBkgrDnstSyrdt"
+DEFAULT_ENGLISH_MEASUREMENT_BASE_URL = "http://apis.data.go.kr/B552584/atmstMsrstnRltmInfo"
+DEFAULT_ENGLISH_STATION_BASE_URL = "http://apis.data.go.kr/B552584/atmstMsrstnInfoEngNm"
+
+SUPPORTED_ENDPOINTS = {
+    "ArpltnInforInqireSvc": (
+        "getMsrstnAcctoRltmMesureDnsty",
+        "getUnityAirEnvrnIdexSnstiveAboveMsrstnList",
+        "getCtprvnRltmMesureDnsty",
+        "getMinuDustFrcstDspth",
+        "getMinuDustWeekFrcstDspth",
+    ),
+    "MsrstnInfoInqireSvc": (
+        "getMsrstnList",
+        "getNearbyMsrstnList",
+        "getTMStdrCrdnt",
+    ),
+    "ArpltnStatsSvc": (
+        "getCtprvnMesureLIst",
+        "getCtprvnMesureSidoLIst",
+        "getMsrstnAcctoRDyrg",
+        "getMsrstnAcctoRMmrg",
+    ),
+    "OzYlwsndOccrrncInforInqireSvc": (
+        "getOzAdvsryOccrrncInfo",
+        "getYlwsndAdvsryOccrrncInfo",
+    ),
+    "UlfptcaAlarmInqireSvc": ("getUlfptcaAlarmInfo",),
+    "UserSportSvc": ("getSvckeyDalyStats",),
+    "MinuDustFrcstDspthSvc": ("getMinuDustFrcstDspth50Over",),
+    "RltmKhaiInfoSvc": ("getMsrstnKhaiRltmDnsty",),
+    "arpltsNtnBkgrDnstSyrdt": ("getList",),
+    "atmstMsrstnRltmInfo": ("getList",),
+    "atmstMsrstnInfoEngNm": ("getList",),
+}
+
+_REGION_KEYS = (
+    "seoul",
+    "busan",
+    "daegu",
+    "incheon",
+    "gwangju",
+    "daejeon",
+    "ulsan",
+    "gyeonggi",
+    "gangwon",
+    "chungbuk",
+    "chungnam",
+    "jeonbuk",
+    "jeonnam",
+    "gyeongbuk",
+    "gyeongnam",
+    "jeju",
+    "sejong",
+)
 
 
 class AirKoreaClient:
@@ -49,6 +119,15 @@ class AirKoreaClient:
         session: SessionLike | None = None,
         pollution_base_url: str = DEFAULT_POLLUTION_BASE_URL,
         station_base_url: str = DEFAULT_STATION_BASE_URL,
+        stats_base_url: str = DEFAULT_STATS_BASE_URL,
+        occurrence_base_url: str = DEFAULT_OCCURRENCE_BASE_URL,
+        alarm_base_url: str = DEFAULT_ALARM_BASE_URL,
+        user_support_base_url: str = DEFAULT_USER_SUPPORT_BASE_URL,
+        high_pm25_forecast_base_url: str = DEFAULT_HIGH_PM25_FORECAST_BASE_URL,
+        cai_base_url: str = DEFAULT_CAI_BASE_URL,
+        background_base_url: str = DEFAULT_BACKGROUND_BASE_URL,
+        english_measurement_base_url: str = DEFAULT_ENGLISH_MEASUREMENT_BASE_URL,
+        english_station_base_url: str = DEFAULT_ENGLISH_STATION_BASE_URL,
     ) -> None:
         self._http = HttpClient(
             service_key,
@@ -59,6 +138,15 @@ class AirKoreaClient:
         )
         self.pollution_base_url = pollution_base_url
         self.station_base_url = station_base_url
+        self.stats_base_url = stats_base_url
+        self.occurrence_base_url = occurrence_base_url
+        self.alarm_base_url = alarm_base_url
+        self.user_support_base_url = user_support_base_url
+        self.high_pm25_forecast_base_url = high_pm25_forecast_base_url
+        self.cai_base_url = cai_base_url
+        self.background_base_url = background_base_url
+        self.english_measurement_base_url = english_measurement_base_url
+        self.english_station_base_url = english_station_base_url
 
     @classmethod
     def from_env(cls, name: str = "AIRKOREA_SERVICE_KEY", **kwargs: Any) -> AirKoreaClient:
@@ -116,7 +204,7 @@ class AirKoreaClient:
         num_of_rows: int = 100,
         ver: str = "1.3",
     ) -> list[AirQualityMeasurement]:
-        """Fetch real-time measurements for all stations in one 시도."""
+        """Fetch real-time measurements for all stations in one sido."""
 
         body = self._pollution(
             "getCtprvnRltmMesureDnsty",
@@ -135,7 +223,7 @@ class AirKoreaClient:
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[AirQualityMeasurement]:
-        """Fetch stations where the comprehensive air-quality index is unhealthy or worse."""
+        """Fetch stations where the CAI grade is unhealthy or worse."""
 
         body = self._pollution(
             "getUnityAirEnvrnIdexSnstiveAboveMsrstnList",
@@ -236,7 +324,7 @@ class AirKoreaClient:
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[TmCoordinate]:
-        """Fetch AirKorea TM reference coordinates by 읍면동 name."""
+        """Fetch AirKorea TM reference coordinates by eup/myeon/dong name."""
 
         body = self._station(
             "getTMStdrCrdnt",
@@ -267,11 +355,314 @@ class AirKoreaClient:
             ver=ver,
         )
 
+    def sido_average_stats(
+        self,
+        *,
+        item_code: str,
+        data_gubun: str = "HOUR",
+        search_condition: str = "WEEK",
+        page_no: int = 1,
+        num_of_rows: int = 100,
+    ) -> list[AirQualityStat]:
+        """Fetch real-time average statistics by city/province."""
+
+        body = self._stats(
+            "getCtprvnMesureLIst",
+            {
+                "itemCode": _normalize_item_code(item_code),
+                "dataGubun": _upper_text(data_gubun, "data_gubun"),
+                "searchCondition": _upper_text(search_condition, "search_condition"),
+                "pageNo": page_no,
+                "numOfRows": num_of_rows,
+            },
+        )
+        return [_air_quality_stat(row) for row in _items(body)]
+
+    def city_average_stats(
+        self,
+        sido_name: str,
+        *,
+        item_code: str | None = None,
+        data_gubun: str | None = None,
+        search_condition: str = "HOUR",
+        page_no: int = 1,
+        num_of_rows: int = 100,
+    ) -> list[AirQualityStat]:
+        """Fetch real-time average statistics by city/county/district."""
+
+        body = self._stats(
+            "getCtprvnMesureSidoLIst",
+            {
+                "sidoName": _required_text(sido_name, "sido_name"),
+                "itemCode": _normalize_item_code(item_code),
+                "dataGubun": _optional_upper(data_gubun),
+                "searchCondition": _upper_text(search_condition, "search_condition"),
+                "pageNo": page_no,
+                "numOfRows": num_of_rows,
+            },
+        )
+        return [_air_quality_stat(row) for row in _items(body)]
+
+    def station_daily_stats(
+        self,
+        inquiry_begin_date: str | date,
+        inquiry_end_date: str | date,
+        *,
+        station_name: str | None = None,
+        page_no: int = 1,
+        num_of_rows: int = 100,
+    ) -> list[AirQualityStat]:
+        """Fetch real-time daily averages for a monitoring station."""
+
+        body = self._stats(
+            "getMsrstnAcctoRDyrg",
+            {
+                "inqBginDt": _date8_param(inquiry_begin_date, "inquiry_begin_date"),
+                "inqEndDt": _date8_param(inquiry_end_date, "inquiry_end_date"),
+                "msrstnName": station_name,
+                "pageNo": page_no,
+                "numOfRows": num_of_rows,
+            },
+        )
+        return [_air_quality_stat(row) for row in _items(body)]
+
+    def station_monthly_stats(
+        self,
+        inquiry_begin_date: str | date,
+        inquiry_end_date: str | date,
+        *,
+        station_name: str | None = None,
+        page_no: int = 1,
+        num_of_rows: int = 100,
+    ) -> list[AirQualityStat]:
+        """Fetch real-time monthly averages for a monitoring station."""
+
+        body = self._stats(
+            "getMsrstnAcctoRMmrg",
+            {
+                "inqBginDt": _date8_param(inquiry_begin_date, "inquiry_begin_date"),
+                "inqEndDt": _date8_param(inquiry_end_date, "inquiry_end_date"),
+                "msrstnName": station_name,
+                "pageNo": page_no,
+                "numOfRows": num_of_rows,
+            },
+        )
+        return [_air_quality_stat(row) for row in _items(body)]
+
+    def ozone_advisories(
+        self,
+        *,
+        year: int | str | None = None,
+        page_no: int = 1,
+        num_of_rows: int = 100,
+    ) -> list[AdvisoryOccurrence]:
+        """Fetch ozone advisory occurrence information."""
+
+        body = self._occurrence(
+            "getOzAdvsryOccrrncInfo",
+            {
+                "year": _year_param(year),
+                "pageNo": page_no,
+                "numOfRows": num_of_rows,
+            },
+        )
+        return [_advisory_occurrence(row, kind="ozone") for row in _items(body)]
+
+    def yellow_dust_advisories(
+        self,
+        *,
+        year: int | str | None = None,
+        page_no: int = 1,
+        num_of_rows: int = 100,
+    ) -> list[AdvisoryOccurrence]:
+        """Fetch yellow-dust advisory occurrence information."""
+
+        body = self._occurrence(
+            "getYlwsndAdvsryOccrrncInfo",
+            {
+                "year": _year_param(year),
+                "pageNo": page_no,
+                "numOfRows": num_of_rows,
+            },
+        )
+        return [_advisory_occurrence(row, kind="yellow_dust") for row in _items(body)]
+
+    def dust_alarms(
+        self,
+        year: int | str,
+        *,
+        item_code: str | None = None,
+        page_no: int = 1,
+        num_of_rows: int = 100,
+    ) -> list[DustAlarm]:
+        """Fetch PM10/PM2.5 advisory and warning status."""
+
+        body = self._alarm(
+            "getUlfptcaAlarmInfo",
+            {
+                "year": _year_param(year),
+                "itemCode": _normalize_item_code(item_code),
+                "pageNo": page_no,
+                "numOfRows": num_of_rows,
+            },
+        )
+        return [_dust_alarm(row) for row in _items(body)]
+
+    def traffic_stats(
+        self,
+        search_date: str | date,
+        *,
+        page_no: int = 1,
+        num_of_rows: int = 100,
+    ) -> list[TrafficStat]:
+        """Fetch daily traffic counts for the current service key."""
+
+        body = self._user_support(
+            "getSvckeyDalyStats",
+            {
+                "searchDate": _date_param(search_date),
+                "pageNo": page_no,
+                "numOfRows": num_of_rows,
+            },
+        )
+        return [_traffic_stat(row) for row in _items(body)]
+
+    def high_pm25_forecasts(
+        self,
+        search_date: str | date,
+        *,
+        page_no: int = 1,
+        num_of_rows: int = 100,
+    ) -> list[HighPm25Forecast]:
+        """Fetch high-concentration PM2.5 (>50 ug/m3) forecasts."""
+
+        body = self._high_pm25_forecast(
+            "getMinuDustFrcstDspth50Over",
+            {
+                "searchDate": _date_param(search_date),
+                "pageNo": page_no,
+                "numOfRows": num_of_rows,
+            },
+        )
+        return [_high_pm25_forecast(row) for row in _items(body)]
+
+    def cai_measurements(
+        self,
+        *,
+        station_name: str | None = None,
+        page_no: int = 1,
+        num_of_rows: int = 100,
+    ) -> list[CaiMeasurement]:
+        """Fetch real-time comprehensive air quality index (CAI) rows."""
+
+        body = self._cai(
+            "getMsrstnKhaiRltmDnsty",
+            {
+                "stationName": station_name,
+                "pageNo": page_no,
+                "numOfRows": num_of_rows,
+            },
+        )
+        return [_cai_measurement(row) for row in _items(body)]
+
+    def background_concentrations(
+        self,
+        measurement_date: str | date,
+        station_name: str,
+        *,
+        page_no: int = 1,
+        num_of_rows: int = 100,
+    ) -> list[BackgroundConcentration]:
+        """Fetch synthetic national-background concentration rows."""
+
+        body = self._background(
+            "getList",
+            {
+                "msrmtYmd": _date8_param(measurement_date, "measurement_date"),
+                "msrstnNm": _required_text(station_name, "station_name"),
+                "pageNo": page_no,
+                "numOfRows": num_of_rows,
+            },
+        )
+        return [_background_concentration(row) for row in _items(body)]
+
+    def english_measurements(
+        self,
+        *,
+        station_name: str | None = None,
+        page_no: int = 1,
+        num_of_rows: int = 100,
+    ) -> list[EnglishAirQualityMeasurement]:
+        """Fetch English real-time measurement rows."""
+
+        body = self._english_measurement(
+            "getList",
+            {
+                "msrstnNm": station_name,
+                "pageNo": page_no,
+                "numOfRows": num_of_rows,
+            },
+        )
+        return [_english_measurement(row) for row in _items(body)]
+
+    def english_stations(
+        self,
+        *,
+        station_name: str | None = None,
+        road_address: str | None = None,
+        page_no: int = 1,
+        num_of_rows: int = 100,
+    ) -> list[EnglishStation]:
+        """Fetch English monitoring-station metadata rows."""
+
+        body = self._english_station(
+            "getList",
+            {
+                "msrstnNm": station_name,
+                "roadNmAddr": road_address,
+                "pageNo": page_no,
+                "numOfRows": num_of_rows,
+            },
+        )
+        return [_english_station(row) for row in _items(body)]
+
     def _pollution(self, endpoint: str, params: Mapping[str, Any]) -> Mapping[str, Any]:
         return self._http.get_body(self.pollution_base_url, endpoint, params)
 
     def _station(self, endpoint: str, params: Mapping[str, Any]) -> Mapping[str, Any]:
         return self._http.get_body(self.station_base_url, endpoint, params)
+
+    def _stats(self, endpoint: str, params: Mapping[str, Any]) -> Mapping[str, Any]:
+        return self._http.get_body(self.stats_base_url, endpoint, params)
+
+    def _occurrence(self, endpoint: str, params: Mapping[str, Any]) -> Mapping[str, Any]:
+        return self._http.get_body(self.occurrence_base_url, endpoint, params)
+
+    def _alarm(self, endpoint: str, params: Mapping[str, Any]) -> Mapping[str, Any]:
+        return self._http.get_body(self.alarm_base_url, endpoint, params)
+
+    def _user_support(self, endpoint: str, params: Mapping[str, Any]) -> Mapping[str, Any]:
+        return self._http.get_body(
+            self.user_support_base_url,
+            endpoint,
+            params,
+            service_key_param="ServiceKey",
+        )
+
+    def _high_pm25_forecast(self, endpoint: str, params: Mapping[str, Any]) -> Mapping[str, Any]:
+        return self._http.get_body(self.high_pm25_forecast_base_url, endpoint, params)
+
+    def _cai(self, endpoint: str, params: Mapping[str, Any]) -> Mapping[str, Any]:
+        return self._http.get_body(self.cai_base_url, endpoint, params)
+
+    def _background(self, endpoint: str, params: Mapping[str, Any]) -> Mapping[str, Any]:
+        return self._http.get_body(self.background_base_url, endpoint, params)
+
+    def _english_measurement(self, endpoint: str, params: Mapping[str, Any]) -> Mapping[str, Any]:
+        return self._http.get_body(self.english_measurement_base_url, endpoint, params)
+
+    def _english_station(self, endpoint: str, params: Mapping[str, Any]) -> Mapping[str, Any]:
+        return self._http.get_body(self.english_station_base_url, endpoint, params)
 
 
 def _items(body: Mapping[str, Any]) -> list[Mapping[str, Any]]:
@@ -401,6 +792,175 @@ def _weekly_forecast(row: Mapping[str, Any]) -> WeeklyForecastNotice:
     )
 
 
+def _air_quality_stat(row: Mapping[str, Any]) -> AirQualityStat:
+    try:
+        return AirQualityStat(
+            data_time=_data_time(row, "dataTime"),
+            measurement_date=_date_value(row, "msurDt", "msrmtYmd", "dataDate"),
+            station_name=_text(row, "msrstnName", "stationName", "msrstnNm"),
+            sido_name=_text(row, "sidoName", "sidoNm"),
+            city_name=_text(row, "cityName", "sggName", "districtName"),
+            item_code=_text(row, "itemCode"),
+            data_gubun=_text(row, "dataGubun"),
+            so2_value=_float(row, "so2Value"),
+            co_value=_float(row, "coValue"),
+            o3_value=_float(row, "o3Value"),
+            no2_value=_float(row, "no2Value"),
+            pm10_value=_float(row, "pm10Value"),
+            pm25_value=_float(row, "pm25Value"),
+            region_values={
+                key: _float(row, key)
+                for key in _REGION_KEYS
+                if key in row
+            },
+            raw=row,
+        )
+    except (TypeError, ValueError) as exc:
+        raise AirKoreaParseError(f"malformed statistics item: {row!r}") from exc
+
+
+def _advisory_occurrence(row: Mapping[str, Any], *, kind: str) -> AdvisoryOccurrence:
+    try:
+        return AdvisoryOccurrence(
+            kind=kind,
+            serial_number=_int(row, "sn"),
+            data_date=_date_value(row, "dataDate", "issueDate"),
+            district_name=_text(row, "districtName"),
+            move_name=_text(row, "moveName"),
+            issue_time=_text(row, "issueTime"),
+            issue_value=_float(row, "issueVal"),
+            clear_time=_text(row, "clearTime"),
+            clear_value=_float(row, "clearVal"),
+            max_value=_float(row, "maxVal"),
+            issue_level=_int(row, "issueLvl"),
+            raw=row,
+        )
+    except (TypeError, ValueError) as exc:
+        raise AirKoreaParseError(f"malformed advisory occurrence item: {row!r}") from exc
+
+
+def _dust_alarm(row: Mapping[str, Any]) -> DustAlarm:
+    try:
+        return DustAlarm(
+            serial_number=_int(row, "sn"),
+            data_date=_date_value(row, "dataDate"),
+            district_name=_text(row, "districtName"),
+            move_name=_text(row, "moveName"),
+            item_code=_text(row, "itemCode"),
+            issue_gbn=_text(row, "issueGbn"),
+            issue_date=_date_value(row, "issueDate"),
+            issue_time=_text(row, "issueTime"),
+            issue_value=_float(row, "issueVal"),
+            clear_date=_date_value(row, "clearDate"),
+            clear_time=_text(row, "clearTime"),
+            clear_value=_float(row, "clearVal"),
+            raw=row,
+        )
+    except (TypeError, ValueError) as exc:
+        raise AirKoreaParseError(f"malformed dust alarm item: {row!r}") from exc
+
+
+def _traffic_stat(row: Mapping[str, Any]) -> TrafficStat:
+    try:
+        return TrafficStat(
+            connection_date=_date_value(row, "conectDe", "connectDe", "searchDate"),
+            service_name=_text(row, "conectOprtinNm", "connectOprtinNm"),
+            count=_int(row, "conectCo", "connectCo"),
+            raw=row,
+        )
+    except (TypeError, ValueError) as exc:
+        raise AirKoreaParseError(f"malformed traffic stat item: {row!r}") from exc
+
+
+def _high_pm25_forecast(row: Mapping[str, Any]) -> HighPm25Forecast:
+    try:
+        return HighPm25Forecast(
+            data_time=_text(row, "dataTime"),
+            inform_data=_date_value(row, "informData", "searchDate"),
+            overall=_text(row, "informOverall", "infornOverall"),
+            cause=_text(row, "informCause"),
+            grade=_text(row, "informGrade"),
+            raw=row,
+        )
+    except (TypeError, ValueError) as exc:
+        raise AirKoreaParseError(f"malformed high PM2.5 forecast item: {row!r}") from exc
+
+
+def _cai_measurement(row: Mapping[str, Any]) -> CaiMeasurement:
+    try:
+        khai_grade = _int(row, "khaiGrade")
+        return CaiMeasurement(
+            station_name=_text(row, "stationName", "msrstnName", "msrstnNm"),
+            station_code=_text(row, "stationCode", "msrstnCode", "msrstnCd"),
+            data_time=_data_time(row, "dataTime", "msurDt"),
+            mang_name=_text(row, "mangName"),
+            khai_value=_int(row, "khaiValue"),
+            khai_grade=khai_grade,
+            khai_grade_label=grade_label(khai_grade),
+            main_pollutant=_text(row, "mainPollutant", "mainPollutantName"),
+            raw=row,
+        )
+    except (TypeError, ValueError) as exc:
+        raise AirKoreaParseError(f"malformed CAI item: {row!r}") from exc
+
+
+def _background_concentration(row: Mapping[str, Any]) -> BackgroundConcentration:
+    try:
+        return BackgroundConcentration(
+            measurement_date=_date_value(row, "msrmtYmd", "msurDt", "dataDate"),
+            measurement_time=_text(row, "msrmtTm", "msrmtHr", "dataTime"),
+            station_name=_text(row, "msrstnNm", "msrstnName", "stationName"),
+            so2_value=_float(row, "so2Value", "so2Vl"),
+            co_value=_float(row, "coValue", "coVl"),
+            o3_value=_float(row, "o3Value", "o3Vl"),
+            no2_value=_float(row, "no2Value", "no2Vl"),
+            pm10_value=_float(row, "pm10Value", "pm10Vl"),
+            pm25_value=_float(row, "pm25Value", "pm25Vl"),
+            raw=row,
+        )
+    except (TypeError, ValueError) as exc:
+        raise AirKoreaParseError(f"malformed background concentration item: {row!r}") from exc
+
+
+def _english_measurement(row: Mapping[str, Any]) -> EnglishAirQualityMeasurement:
+    try:
+        khai_grade = _int(row, "khaiGrade")
+        return EnglishAirQualityMeasurement(
+            station_name=_text(row, "msrstnNm", "stationName"),
+            station_name_english=_text(row, "msrstnEngNm", "stationNameEng", "engName"),
+            data_time=_data_time(row, "dataTime", "msurDt"),
+            mang_name=_text(row, "mangName"),
+            station_code=_text(row, "stationCode", "msrstnCode", "msrstnCd"),
+            khai_value=_int(row, "khaiValue"),
+            khai_grade=khai_grade,
+            khai_grade_label=grade_label(khai_grade),
+            so2_value=_float(row, "so2Value"),
+            co_value=_float(row, "coValue"),
+            o3_value=_float(row, "o3Value"),
+            no2_value=_float(row, "no2Value"),
+            pm10_value=_float(row, "pm10Value"),
+            pm25_value=_float(row, "pm25Value"),
+            raw=row,
+        )
+    except (TypeError, ValueError) as exc:
+        raise AirKoreaParseError(f"malformed English measurement item: {row!r}") from exc
+
+
+def _english_station(row: Mapping[str, Any]) -> EnglishStation:
+    try:
+        return EnglishStation(
+            station_name=_text(row, "msrstnNm", "stationName"),
+            station_name_english=_text(row, "msrstnEngNm", "stationNameEng", "engName"),
+            road_address=_text(row, "roadNmAddr", "addr"),
+            road_address_english=_text(row, "roadNmAddrEng", "addrEng"),
+            lat=_float(row, "dmX", "lat"),
+            lon=_float(row, "dmY", "lon"),
+            raw=row,
+        )
+    except (TypeError, ValueError) as exc:
+        raise AirKoreaParseError(f"malformed English station item: {row!r}") from exc
+
+
 def _coordinates(
     *,
     tm_x: float | None,
@@ -428,9 +988,70 @@ def _required_text(value: Any, field: str) -> str:
     return text
 
 
+def _upper_text(value: Any, field: str) -> str:
+    return _required_text(value, field).upper()
+
+
+def _optional_upper(value: str | None) -> str | None:
+    text = strip_or_none(value)
+    return text.upper() if text is not None else None
+
+
+def _normalize_item_code(value: str | None) -> str | None:
+    text = strip_or_none(value)
+    if text is None:
+        return None
+    return text.upper().replace("PM2.5", "PM25")
+
+
 def _date_param(value: str | date | None) -> str | None:
     if value is None:
         return None
     if isinstance(value, date):
         return value.isoformat()
     return _required_text(value, "search_date")
+
+
+def _date8_param(value: str | date, field: str) -> str:
+    if isinstance(value, date):
+        return value.strftime("%Y%m%d")
+    text = _required_text(value, field)
+    parsed = to_date_or_none(text)
+    return parsed.strftime("%Y%m%d") if parsed is not None else text
+
+
+def _year_param(value: int | str | None) -> str | None:
+    if value is None:
+        return None
+    text = _required_text(value, "year")
+    if len(text) != 4 or not text.isdigit():
+        raise ValueError("year must be a four-digit year")
+    return text
+
+
+def _first(row: Mapping[str, Any], *keys: str) -> Any:
+    for key in keys:
+        value = row.get(key)
+        if strip_or_none(value) is not None:
+            return value
+    return None
+
+
+def _text(row: Mapping[str, Any], *keys: str) -> str | None:
+    return strip_or_none(_first(row, *keys))
+
+
+def _float(row: Mapping[str, Any], *keys: str) -> float | None:
+    return to_float_or_none(_first(row, *keys))
+
+
+def _int(row: Mapping[str, Any], *keys: str) -> int | None:
+    return to_int_or_none(_first(row, *keys))
+
+
+def _date_value(row: Mapping[str, Any], *keys: str) -> date | None:
+    return to_date_or_none(_first(row, *keys))
+
+
+def _data_time(row: Mapping[str, Any], *keys: str) -> Any:
+    return parse_data_time(_first(row, *keys))

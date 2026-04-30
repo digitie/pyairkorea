@@ -1,10 +1,17 @@
 # Changelog
 
+## 0.2.0
+
+- AirKorea 계열 OpenAPI 11개 서비스군 전체 목록을 `SUPPORTED_ENDPOINTS`로 문서화했습니다.
+- 대기오염통계, 오존황사 발생정보, 미세먼지 경보, 사용자 지원, 고농도 PM2.5 예보, CAI, 국가배경농도 합성데이터, 영문 측정정보, 영문 측정소정보 API를 추가했습니다.
+- 신규 모델 `AirQualityStat`, `AdvisoryOccurrence`, `DustAlarm`, `TrafficStat`, `HighPm25Forecast`, `CaiMeasurement`, `BackgroundConcentration`, `EnglishAirQualityMeasurement`, `EnglishStation`을 추가했습니다.
+- `ServiceKey`처럼 서비스별 인증키 파라미터명이 다른 경우를 HTTP helper에서 지원합니다.
+- 누락 방지 테스트와 반복 실수 방지 문서를 강화했습니다.
+
 ## 0.1.0
 
-- 초기 패키지 구조 작성.
-- AirKorea 대기오염정보 API 6개 public method 구현.
-- AirKorea 측정소정보 API 4개 public/convenience method 구현.
-- HTTP/result-code 예외 매핑 추가.
-- WGS84↔AirKorea TM 좌표 변환 helper 추가.
-- README, API 명세, 테스트 정책, 반복 실수 방지 문서 작성.
+- 초기 패키지 구조를 작성했습니다.
+- AirKorea 대기오염정보 API와 측정소정보 API의 핵심 메서드를 구현했습니다.
+- HTTP/result-code 예외 매핑을 추가했습니다.
+- WGS84와 AirKorea TM 좌표 변환 helper를 추가했습니다.
+- README, API 명세, 테스트 원칙, 반복 실수 방지 문서를 작성했습니다.
