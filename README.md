@@ -2,7 +2,7 @@
 
 한국환경공단 AirKorea OpenAPI를 Python에서 쓰기 쉽게 감싼 비공식 클라이언트입니다.
 
-`pyairkorea`는 공공데이터포털의 AirKorea 계열 B552584 OpenAPI를 dataclass 기반 Python 객체로 변환합니다. 외부 프로그램에서 안정적으로 붙일 수 있도록 문자열 입력은 계속 지원하면서 enum, 좌표 값 객체, 표준화 helper를 제공합니다.
+`pyairkorea`는 공공데이터포털의 AirKorea 계열 B552584 OpenAPI를 Pydantic v2 기반 Python 객체로 변환합니다. 외부 프로그램에서 안정적으로 붙일 수 있도록 문자열 입력은 계속 지원하면서 enum, 좌표 값 객체, 표준화 helper를 제공합니다.
 
 ## 설치
 
@@ -84,6 +84,7 @@ alarms = air.dust_alarms(2026, item_code=Pollutant.PM10)
 station = air.stations(station_name="종로구")[0]
 print(station.coordinates)        # LatLon(...) or None
 print(latest.khai_grade_enum)     # AirQualityGrade.MODERATE or None
+print(latest.model_dump())        # Pydantic dict
 ```
 
 자세한 라이브러리 사용 지침은 [docs/library-surface.md](docs/library-surface.md)를 확인하세요.

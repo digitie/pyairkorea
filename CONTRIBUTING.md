@@ -12,7 +12,7 @@ pip install -e ".[dev]"
 
 1. 공식 공공데이터포털 문서 또는 실제 게이트웨이 응답으로 endpoint와 파라미터를 확인합니다.
 2. `pyairkorea/client.py`에 public method와 parser를 추가합니다.
-3. `pyairkorea/models.py`에 필요한 dataclass를 추가합니다.
+3. `pyairkorea/models.py`에 필요한 Pydantic 응답 모델을 추가합니다.
 4. `tests/`에 fixture 기반 테스트를 추가합니다.
 5. `airkorea-api.md`, `docs/implementation-status.md`, `docs/repeated-mistakes.md`를 갱신합니다.
 

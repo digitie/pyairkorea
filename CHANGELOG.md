@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0
+
+- 응답 모델을 dataclass에서 Pydantic v2 `BaseModel` 기반으로 전환했습니다.
+- 모든 응답 모델이 `model_dump()`, `model_dump_json()`, `model_validate()`를 지원합니다.
+- 모델 불변성은 Pydantic `ConfigDict(frozen=True)`로 유지합니다.
+- CLI JSON 직렬화가 Pydantic 모델을 인식하도록 보강했습니다.
+- `pydantic>=2.7` 런타임 의존성을 추가했습니다.
+
 ## 0.3.0
 
 - 외부 프로그램 연동을 위해 `DataTerm`, `InformCode`, `Pollutant`, `SidoName`, `StatsDataGubun`, `StatsSearchCondition`, `AirQualityGrade` enum을 추가했습니다.

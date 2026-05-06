@@ -33,6 +33,7 @@ from pyairkorea.exceptions import (
 )
 from pyairkorea.models import (
     AdvisoryOccurrence,
+    AirKoreaModel,
     AirQualityMeasurement,
     AirQualityStat,
     BackgroundConcentration,
@@ -49,7 +50,7 @@ from pyairkorea.models import (
     WeeklyForecastNotice,
 )
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 __all__ = [
     "AirKoreaAuthError",
@@ -61,6 +62,7 @@ __all__ = [
     "AirKoreaRateLimitError",
     "AirKoreaRequestError",
     "AirKoreaServerError",
+    "AirKoreaModel",
     "AirQualityGrade",
     "AirQualityMeasurement",
     "AirQualityStat",

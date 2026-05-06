@@ -5,7 +5,7 @@
 ## 저장소 구조
 
 - `pyairkorea/client.py`: public client, base URL, endpoint 목록
-- `pyairkorea/models.py`: public dataclass 모델
+- `pyairkorea/models.py`: public Pydantic 응답 모델
 - `pyairkorea/_http.py`: HTTP 호출, retry, resultCode 예외 매핑
 - `pyairkorea/_convert.py`: 문자열/숫자/날짜 변환 helper
 - `tests/`: 네트워크 없는 fixture 기반 단위 테스트

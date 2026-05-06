@@ -1,11 +1,12 @@
-"""Public dataclasses returned by the AirKorea client."""
+"""Public Pydantic models returned by the AirKorea client."""
 
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import Any
+
+from pydantic import BaseModel, ConfigDict, Field
 
 from pyairkorea.codes import AirQualityGrade, InformCode, Pollutant
 from pyairkorea.coords import LatLon
@@ -13,8 +14,13 @@ from pyairkorea.coords import LatLon
 RawRecord = Mapping[str, Any]
 
 
-@dataclass(frozen=True)
-class AirQualityMeasurement:
+class AirKoreaModel(BaseModel):
+    """Base class for immutable pyairkorea response models."""
+
+    model_config = ConfigDict(frozen=True)
+
+
+class AirQualityMeasurement(AirKoreaModel):
     """Hourly air quality measurement for one monitoring station."""
 
     station_name: str
@@ -40,15 +46,14 @@ class AirQualityMeasurement:
     pm10_grade_1h: int | None
     pm25_grade: int | None
     pm25_grade_1h: int | None
-    raw: RawRecord = field(repr=False)
+    raw: RawRecord = Field(repr=False)
 
     @property
     def khai_grade_enum(self) -> AirQualityGrade | None:
         return AirQualityGrade.from_code(self.khai_grade)
 
 
-@dataclass(frozen=True)
-class Station:
+class Station(AirKoreaModel):
     """Air quality monitoring station metadata."""
 
     station_name: str
@@ -58,7 +63,7 @@ class Station:
     item: str | None
     lat: float | None
     lon: float | None
-    raw: RawRecord = field(repr=False)
+    raw: RawRecord = Field(repr=False)
 
     @property
     def coordinates(self) -> LatLon | None:
@@ -67,30 +72,27 @@ class Station:
         return LatLon(self.lat, self.lon)
 
 
-@dataclass(frozen=True)
-class NearbyStation:
+class NearbyStation(AirKoreaModel):
     """Monitoring station near a TM coordinate."""
 
     station_name: str
     addr: str | None
     distance_km: float | None
-    raw: RawRecord = field(repr=False)
+    raw: RawRecord = Field(repr=False)
 
 
-@dataclass(frozen=True)
-class TmCoordinate:
-    """AirKorea TM reference coordinate for an 읍면동 name."""
+class TmCoordinate(AirKoreaModel):
+    """AirKorea TM reference coordinate for an eup/myeon/dong name."""
 
     sido_name: str | None
     sgg_name: str | None
     umd_name: str | None
     tm_x: float | None
     tm_y: float | None
-    raw: RawRecord = field(repr=False)
+    raw: RawRecord = Field(repr=False)
 
 
-@dataclass(frozen=True)
-class ForecastNotice:
+class ForecastNotice(AirKoreaModel):
     """Fine-dust or ozone forecast notice."""
 
     data_time: str | None
@@ -101,7 +103,7 @@ class ForecastNotice:
     grade: str | None
     action: str | None
     image_urls: tuple[str, ...]
-    raw: RawRecord = field(repr=False)
+    raw: RawRecord = Field(repr=False)
 
     @property
     def inform_code_enum(self) -> InformCode | None:
@@ -111,8 +113,7 @@ class ForecastNotice:
             return None
 
 
-@dataclass(frozen=True)
-class WeeklyForecastNotice:
+class WeeklyForecastNotice(AirKoreaModel):
     """Weekly PM2.5 forecast notice."""
 
     presented_at: str | None
@@ -124,11 +125,10 @@ class WeeklyForecastNotice:
     third_content: str | None
     fourth_date: str | None
     fourth_content: str | None
-    raw: RawRecord = field(repr=False)
+    raw: RawRecord = Field(repr=False)
 
 
-@dataclass(frozen=True)
-class AirQualityStat:
+class AirQualityStat(AirKoreaModel):
     """Average/statistical air-quality row from AirKorea statistics APIs."""
 
     data_time: datetime | None
@@ -144,8 +144,8 @@ class AirQualityStat:
     no2_value: float | None
     pm10_value: float | None
     pm25_value: float | None
-    region_values: Mapping[str, float | None] = field(default_factory=dict, repr=False)
-    raw: RawRecord = field(repr=False, default_factory=dict)
+    region_values: Mapping[str, float | None] = Field(default_factory=dict, repr=False)
+    raw: RawRecord = Field(default_factory=dict, repr=False)
 
     @property
     def item_code_enum(self) -> Pollutant | None:
@@ -155,8 +155,7 @@ class AirQualityStat:
             return None
 
 
-@dataclass(frozen=True)
-class AdvisoryOccurrence:
+class AdvisoryOccurrence(AirKoreaModel):
     """Ozone or yellow-dust advisory occurrence row."""
 
     kind: str
@@ -170,11 +169,10 @@ class AdvisoryOccurrence:
     clear_value: float | None
     max_value: float | None
     issue_level: int | None
-    raw: RawRecord = field(repr=False)
+    raw: RawRecord = Field(repr=False)
 
 
-@dataclass(frozen=True)
-class DustAlarm:
+class DustAlarm(AirKoreaModel):
     """PM10/PM2.5 advisory or warning row."""
 
     serial_number: int | None
@@ -189,7 +187,7 @@ class DustAlarm:
     clear_date: date | None
     clear_time: str | None
     clear_value: float | None
-    raw: RawRecord = field(repr=False)
+    raw: RawRecord = Field(repr=False)
 
     @property
     def item_code_enum(self) -> Pollutant | None:
@@ -199,18 +197,16 @@ class DustAlarm:
             return None
 
 
-@dataclass(frozen=True)
-class TrafficStat:
+class TrafficStat(AirKoreaModel):
     """Daily API traffic count for an AirKorea service key."""
 
     connection_date: date | None
     service_name: str | None
     count: int | None
-    raw: RawRecord = field(repr=False)
+    raw: RawRecord = Field(repr=False)
 
 
-@dataclass(frozen=True)
-class HighPm25Forecast:
+class HighPm25Forecast(AirKoreaModel):
     """High-concentration PM2.5 forecast row."""
 
     data_time: str | None
@@ -218,11 +214,10 @@ class HighPm25Forecast:
     overall: str | None
     cause: str | None
     grade: str | None
-    raw: RawRecord = field(repr=False)
+    raw: RawRecord = Field(repr=False)
 
 
-@dataclass(frozen=True)
-class CaiMeasurement:
+class CaiMeasurement(AirKoreaModel):
     """Real-time comprehensive air quality index (CAI) row."""
 
     station_name: str | None
@@ -233,15 +228,14 @@ class CaiMeasurement:
     khai_grade: int | None
     khai_grade_label: str | None
     main_pollutant: str | None
-    raw: RawRecord = field(repr=False)
+    raw: RawRecord = Field(repr=False)
 
     @property
     def khai_grade_enum(self) -> AirQualityGrade | None:
         return AirQualityGrade.from_code(self.khai_grade)
 
 
-@dataclass(frozen=True)
-class BackgroundConcentration:
+class BackgroundConcentration(AirKoreaModel):
     """Synthetic national-background concentration row for AI test data."""
 
     measurement_date: date | None
@@ -253,11 +247,10 @@ class BackgroundConcentration:
     no2_value: float | None
     pm10_value: float | None
     pm25_value: float | None
-    raw: RawRecord = field(repr=False)
+    raw: RawRecord = Field(repr=False)
 
 
-@dataclass(frozen=True)
-class EnglishAirQualityMeasurement:
+class EnglishAirQualityMeasurement(AirKoreaModel):
     """English real-time measurement row."""
 
     station_name: str | None
@@ -274,15 +267,14 @@ class EnglishAirQualityMeasurement:
     no2_value: float | None
     pm10_value: float | None
     pm25_value: float | None
-    raw: RawRecord = field(repr=False)
+    raw: RawRecord = Field(repr=False)
 
     @property
     def khai_grade_enum(self) -> AirQualityGrade | None:
         return AirQualityGrade.from_code(self.khai_grade)
 
 
-@dataclass(frozen=True)
-class EnglishStation:
+class EnglishStation(AirKoreaModel):
     """English monitoring-station metadata row."""
 
     station_name: str | None
@@ -291,7 +283,7 @@ class EnglishStation:
     road_address_english: str | None
     lat: float | None
     lon: float | None
-    raw: RawRecord = field(repr=False)
+    raw: RawRecord = Field(repr=False)
 
     @property
     def coordinates(self) -> LatLon | None:

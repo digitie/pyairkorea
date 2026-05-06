@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyairkorea"
-version = "0.3.0"
+version = "0.4.0"
 description = "Python client for Korea Environment Corporation AirKorea public APIs."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -26,6 +26,7 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
+  "pydantic>=2.7",
   "pyproj>=3.5",
   "requests>=2.31",
 ]

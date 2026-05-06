@@ -12,7 +12,7 @@
 
 - public method는 endpoint 하나에 명확히 매핑합니다.
 - public method는 기존 문자열 입력과 새 enum 입력을 모두 받아야 합니다.
-- 응답 dataclass는 확인된 주요 필드만 파싱하고 `raw`를 항상 보존합니다.
+- 응답 Pydantic 모델은 확인된 주요 필드만 파싱하고 `raw`를 항상 보존합니다.
 - 좌표 입력은 WGS84 `LatLon(lat, lon)` 또는 AirKorea TM `TmPoint(tm_x, tm_y)`를 우선 지원하고 기존 keyword 입력도 유지합니다.
 - 값 변환은 `_convert.py`의 helper를 재사용합니다.
 - 결측값은 `None`으로 보존하고 0으로 바꾸지 않습니다.

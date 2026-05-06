@@ -53,15 +53,16 @@ air.nearby_stations(tm={"tmX": 198242, "tmY": 451580})
 
 `coordinate`와 `tm` 계열 입력을 동시에 넘기면 `ValueError`가 발생합니다. 좌표계가 섞였을 때 조용히 틀린 측정소를 고르는 일을 막기 위한 의도적인 동작입니다.
 
-## 응답 모델 property
+## Pydantic 응답 모델
 
-응답 dataclass는 원본 값과 함께 후처리용 property를 제공합니다.
+응답 객체는 Pydantic v2 `BaseModel` 기반입니다. 필드 접근은 속성으로 하고, 외부 직렬화에는 `model_dump()`나 `model_dump_json()`을 사용할 수 있습니다. 원본 응답은 `raw`에 보존합니다.
 
 ```python
 latest = air.latest_station_measurement("종로구")
 if latest is not None:
     print(latest.khai_grade_enum)
     print(latest.khai_grade_enum.label if latest.khai_grade_enum else None)
+    print(latest.model_dump(mode="json"))
 
 station = air.stations(station_name="종로구")[0]
 print(station.coordinates)

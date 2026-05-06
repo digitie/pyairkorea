@@ -86,7 +86,7 @@ AirKorea 응답은 서비스와 시점에 따라 `body.items`가 list, dict, `it
 
 ## 모델링 원칙
 
-- 확인된 주요 필드는 dataclass 필드로 변환합니다.
+- 확인된 주요 필드는 Pydantic 모델 필드로 변환합니다.
 - 신규 API처럼 상세 응답 스키마가 포털 HTML에 충분히 드러나지 않는 경우 `raw`를 항상 보존합니다.
 - `-`, 빈 문자열, `null`, `none`, `nan`은 `None`으로 처리합니다.
 - 숫자 문자열은 `float` 또는 `int`로 변환합니다.
