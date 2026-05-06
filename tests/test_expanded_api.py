@@ -4,6 +4,7 @@ from datetime import date
 
 import pytest
 
+from pyairkorea import Pollutant, StatsDataGubun, StatsSearchCondition
 from pyairkorea.client import SUPPORTED_ENDPOINTS, AirKoreaClient
 from pyairkorea.exceptions import AirKoreaParseError
 from tests.conftest import FakeResponse, FakeSession, payload
@@ -71,7 +72,11 @@ def test_statistics_methods_map_params_and_models() -> None:
     )
     client = AirKoreaClient("KEY", session=session, retries=0)
 
-    sido = client.sido_average_stats(item_code="pm2.5", data_gubun="daily")
+    sido = client.sido_average_stats(
+        item_code=Pollutant.PM25,
+        data_gubun=StatsDataGubun.DAILY,
+        search_condition=StatsSearchCondition.WEEK,
+    )
     cities = client.city_average_stats("Seoul", item_code="PM10")
     daily = client.station_daily_stats(date(2026, 4, 1), "2026-04-30", station_name="Jongno-gu")
     monthly = client.station_monthly_stats("20260401", "20260430")
@@ -83,6 +88,7 @@ def test_statistics_methods_map_params_and_models() -> None:
     assert daily[0].station_name == "Jongno-gu"
     assert daily[0].pm25_value == 18.0
     assert monthly[0].pm25_value == 21.0
+    assert sido[0].item_code_enum is Pollutant.PM10
     assert session.calls[0].url.endswith("/ArpltnStatsSvc/getCtprvnMesureLIst")
     assert session.calls[0].params["itemCode"] == "PM25"
     assert session.calls[0].params["dataGubun"] == "DAILY"
@@ -203,7 +209,7 @@ def test_remaining_airkorea_services_map_params_and_models() -> None:
 
     ozone = client.ozone_advisories(year=2026)
     yellow_dust = client.yellow_dust_advisories(year="2026")
-    alarms = client.dust_alarms(2026, item_code="pm2.5")
+    alarms = client.dust_alarms(2026, item_code=Pollutant.PM25)
     traffic = client.traffic_stats(date(2026, 4, 30))
     high = client.high_pm25_forecasts("2026-04-30")
     cai = client.cai_measurements(station_name="Jongno-gu")
@@ -215,11 +221,13 @@ def test_remaining_airkorea_services_map_params_and_models() -> None:
     assert ozone[0].issue_value == 0.133
     assert yellow_dust[0].kind == "yellow_dust"
     assert alarms[0].item_code == "PM25"
+    assert alarms[0].item_code_enum is Pollutant.PM25
     assert alarms[0].clear_value == 28.0
     assert traffic[0].count == 12
     assert high[0].overall == "PM2.5 over 50"
     assert cai[0].station_code == "111123"
     assert cai[0].khai_grade == 2
+    assert cai[0].khai_grade_enum is not None
     assert background[0].station_name == "s0002"
     assert background[0].pm25_value == 12.0
     assert english_measurements[0].station_name_english == "Jeungpyeong"

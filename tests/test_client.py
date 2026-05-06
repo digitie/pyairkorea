@@ -4,6 +4,7 @@ from datetime import date
 
 import pytest
 
+from pyairkorea import DataTerm, InformCode, LatLon, SidoName, TmPoint
 from pyairkorea.client import AirKoreaClient
 from pyairkorea.exceptions import AirKoreaParseError
 from tests.conftest import FakeResponse, FakeSession, payload
@@ -40,7 +41,7 @@ def test_station_measurements_maps_types_and_params() -> None:
     session = FakeSession([FakeResponse(json_data=payload([measurement_row()]))])
     client = AirKoreaClient("decoded-key", session=session, retries=0)
 
-    rows = client.station_measurements("종로구", data_term="daily", num_of_rows=1)
+    rows = client.station_measurements("종로구", data_term=DataTerm.DAILY, num_of_rows=1)
 
     assert len(rows) == 1
     row = rows[0]
@@ -52,6 +53,8 @@ def test_station_measurements_maps_types_and_params() -> None:
     assert row.khai_value == 74
     assert row.khai_grade == 2
     assert row.khai_grade_label == "보통"
+    assert row.khai_grade_enum is not None
+    assert row.khai_grade_enum.label == "보통"
     assert row.pm10_grade_1h == 1
     assert session.last_call.url.endswith("/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty")
     assert session.last_call.params["serviceKey"] == "decoded-key"
@@ -82,7 +85,7 @@ def test_sido_measurements_validates_sido_and_handles_missing_values() -> None:
     session = FakeSession([FakeResponse(json_data=payload({"item": row}))])
     client = AirKoreaClient("KEY", session=session, retries=0)
 
-    rows = client.sido_measurements("서울")
+    rows = client.sido_measurements(SidoName.SEOUL)
 
     assert rows[0].station_name == "중구"
     assert rows[0].pm10_value is None
@@ -133,6 +136,7 @@ def test_stations_maps_dmx_dmy_to_lat_lon() -> None:
     assert stations[0].year == 1997
     assert stations[0].lat == 37.572025
     assert stations[0].lon == 127.005028
+    assert stations[0].coordinates == LatLon(37.572025, 127.005028)
     assert session.last_call.url.endswith("/MsrstnInfoInqireSvc/getMsrstnList")
     assert session.last_call.params["addr"] == "서울"
     assert session.last_call.params["stationName"] == "종로구"
@@ -150,7 +154,7 @@ def test_nearby_stations_accepts_direct_tm_and_latlon() -> None:
     )
     direct_client = AirKoreaClient("KEY", session=direct_session, retries=0)
 
-    direct_rows = direct_client.nearby_stations(tm_x=244148, tm_y=412423, ver="1")
+    direct_rows = direct_client.nearby_stations(tm=TmPoint(244148, 412423), ver="1")
 
     assert direct_rows[0].station_name == "부발읍"
     assert direct_rows[0].distance_km == 8.1
@@ -250,10 +254,11 @@ def test_forecast_notices_and_weekly_forecasts() -> None:
     )
     client = AirKoreaClient("KEY", session=session, retries=0)
 
-    notices = client.forecast_notices(search_date=date(2026, 4, 30), inform_code="pm10")
+    notices = client.forecast_notices(search_date=date(2026, 4, 30), inform_code=InformCode.PM10)
     weekly = client.weekly_forecasts(search_date="2026-04-30")
 
     assert notices[0].inform_data == date(2026, 4, 30)
+    assert notices[0].inform_code_enum is InformCode.PM10
     assert notices[0].overall == "대체로 보통"
     assert notices[0].action is None
     assert notices[0].image_urls == ("https://www.airkorea.or.kr/dustImage/1.png",)
@@ -276,7 +281,7 @@ def test_measurement_near_chains_nearby_station_then_measurement() -> None:
     )
     client = AirKoreaClient("KEY", session=session, retries=0)
 
-    result = client.measurement_near(lat=37.5665, lon=126.9780)
+    result = client.measurement_near(coordinate=LatLon(37.5665, 126.9780))
 
     assert result is not None
     assert result.station_name == "종로구"

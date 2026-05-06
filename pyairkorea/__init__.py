@@ -1,7 +1,26 @@
 """Python client for Korea Environment Corporation AirKorea APIs."""
 
 from pyairkorea.client import SUPPORTED_ENDPOINTS, AirKoreaClient
-from pyairkorea.coords import tm_to_wgs84, wgs84_to_tm
+from pyairkorea.codes import (
+    AirQualityGrade,
+    DataTerm,
+    InformCode,
+    Pollutant,
+    SidoName,
+    StatsDataGubun,
+    StatsSearchCondition,
+)
+from pyairkorea.coords import (
+    LatLon,
+    LatLonLike,
+    TmPoint,
+    TmPointLike,
+    coerce_latlon,
+    coerce_tm_point,
+    resolve_airkorea_tm,
+    tm_to_wgs84,
+    wgs84_to_tm,
+)
 from pyairkorea.exceptions import (
     AirKoreaAuthError,
     AirKoreaError,
@@ -30,7 +49,7 @@ from pyairkorea.models import (
     WeeklyForecastNotice,
 )
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "AirKoreaAuthError",
@@ -42,23 +61,37 @@ __all__ = [
     "AirKoreaRateLimitError",
     "AirKoreaRequestError",
     "AirKoreaServerError",
+    "AirQualityGrade",
     "AirQualityMeasurement",
     "AirQualityStat",
     "AdvisoryOccurrence",
     "BackgroundConcentration",
     "CaiMeasurement",
+    "DataTerm",
     "DustAlarm",
     "EnglishAirQualityMeasurement",
     "EnglishStation",
     "ForecastNotice",
     "HighPm25Forecast",
+    "InformCode",
+    "LatLon",
+    "LatLonLike",
     "NearbyStation",
+    "Pollutant",
+    "SidoName",
     "Station",
+    "StatsDataGubun",
+    "StatsSearchCondition",
     "SUPPORTED_ENDPOINTS",
     "TmCoordinate",
+    "TmPoint",
+    "TmPointLike",
     "TrafficStat",
     "WeeklyForecastNotice",
     "__version__",
+    "coerce_latlon",
+    "coerce_tm_point",
+    "resolve_airkorea_tm",
     "tm_to_wgs84",
     "wgs84_to_tm",
 ]

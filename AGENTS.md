@@ -15,6 +15,8 @@
 
 - API 목록은 `SUPPORTED_ENDPOINTS`와 [airkorea-api.md](airkorea-api.md)를 기준으로 한다.
 - 새 API를 추가하면 코드, 테스트, 문서를 함께 수정한다.
+- enum/type을 추가할 때 기존 문자열 입력 호환성을 유지한다.
+- 좌표는 WGS84 `LatLon(lat, lon)`과 AirKorea TM `TmPoint(tm_x, tm_y)` 순서를 문서와 테스트로 고정한다.
 - 신규 응답 스키마가 불확실하면 확인된 필드만 파싱하고 `raw`를 보존한다.
 - destructive git 명령은 사용하지 않는다.
 - 커밋 전 `pytest`, `ruff`, `mypy`, coverage를 통과시킨다.

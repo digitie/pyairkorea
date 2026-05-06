@@ -55,3 +55,16 @@
 - 실시간 측정값, 예보 문구, 경보 상태는 시간에 따라 바뀐다
 - 기본 테스트는 fixture/mock 기반으로 둔다
 - live 테스트는 integration marker로 분리하고 값 자체보다 envelope, 타입, 필드 존재를 확인한다
+
+## 10. enum을 추가하면서 문자열 호환성을 깨지 말 것
+
+- 외부 프로그램은 이미 `"PM10"`, `"서울"`, `"DAILY"` 같은 문자열을 넘길 수 있다
+- enum은 새 코드의 타입 안정성을 위한 추가 표면이지 기존 문자열 API의 대체가 아니다
+- 규칙: public method는 enum과 문자열을 모두 받아야 하고 normalize helper에서 최종 API 문자열로 변환한다
+
+## 11. 위경도 순서를 섞지 말 것
+
+- WGS84는 항상 `lat, lon` 순서다
+- AirKorea TM은 항상 `tm_x, tm_y` 순서다
+- `(lon, lat)` 관례를 쓰는 외부 GIS 라이브러리와 섞일 수 있으므로 public 입력에는 `LatLon` 사용을 권장한다
+- 규칙: 좌표 tuple은 `(lat, lon)`으로 문서화하고, mapping 입력은 `lat`/`lon` 또는 `latitude`/`longitude` 키를 받는다

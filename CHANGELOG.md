@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+
+- 외부 프로그램 연동을 위해 `DataTerm`, `InformCode`, `Pollutant`, `SidoName`, `StatsDataGubun`, `StatsSearchCondition`, `AirQualityGrade` enum을 추가했습니다.
+- `LatLon`, `TmPoint`, `coerce_latlon`, `coerce_tm_point`, `resolve_airkorea_tm`으로 좌표 입력을 표준화했습니다.
+- `nearby_stations()`와 `measurement_near()`가 좌표 값 객체, tuple, mapping 입력을 받을 수 있게 했습니다.
+- 응답 모델에 `khai_grade_enum`, `item_code_enum`, `inform_code_enum`, `coordinates` property를 추가했습니다.
+- 외부 라이브러리 사용 지침 문서 `docs/library-surface.md`를 추가했습니다.
+
 ## 0.2.0
 
 - AirKorea 계열 OpenAPI 11개 서비스군 전체 목록을 `SUPPORTED_ENDPOINTS`로 문서화했습니다.

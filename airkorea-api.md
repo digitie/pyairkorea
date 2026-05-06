@@ -92,6 +92,15 @@ AirKorea 응답은 서비스와 시점에 따라 `body.items`가 list, dict, `it
 - 숫자 문자열은 `float` 또는 `int`로 변환합니다.
 - 실시간 측정 시각은 KST aware `datetime`으로 변환합니다.
 
+## 타입/좌표 표준화
+
+- 문자열 입력은 계속 지원합니다.
+- 새 코드에서는 `DataTerm`, `InformCode`, `Pollutant`, `SidoName`, `StatsDataGubun`, `StatsSearchCondition` enum 사용을 권장합니다.
+- WGS84 좌표는 `LatLon(lat, lon)`으로 표준화합니다.
+- AirKorea TM 좌표는 `TmPoint(tm_x, tm_y)`로 표준화합니다.
+- `nearby_stations()`와 `measurement_near()`는 `LatLon`, `(lat, lon)`, mapping, 기존 `lat=...`, `lon=...` 입력을 모두 받습니다.
+- 응답 모델은 `khai_grade_enum`, `item_code_enum`, `inform_code_enum`, `coordinates` 같은 후처리용 property를 제공합니다.
+
 ## 범위 밖
 
 이 프로젝트는 AirKorea 대기질 API 전용입니다. 한국환경공단이 같은 제공기관 코드로 제공하는 비점오염원, 재활용, 냉매 등 비-AirKorea 서비스는 포함하지 않습니다.

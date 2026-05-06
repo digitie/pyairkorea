@@ -23,11 +23,18 @@
 | 영역 | 파일 |
 |---|---|
 | public client/API 목록 | `pyairkorea/client.py` |
+| enum/코드 정규화 | `pyairkorea/codes.py` |
+| 좌표 값 객체/좌표 변환 | `pyairkorea/coords.py` |
 | HTTP envelope/result-code 처리 | `pyairkorea/_http.py` |
 | dataclass 모델 | `pyairkorea/models.py` |
 | 값 변환 | `pyairkorea/_convert.py` |
-| 코드/검증 유틸 | `pyairkorea/codes.py` |
-| 좌표 변환 | `pyairkorea/coords.py` |
+
+## 라이브러리 표면
+
+- enum 입력: `DataTerm`, `InformCode`, `Pollutant`, `SidoName`, `StatsDataGubun`, `StatsSearchCondition`, `AirQualityGrade`
+- 좌표 입력: WGS84는 `LatLon(lat, lon)`, AirKorea TM은 `TmPoint(tm_x, tm_y)`
+- 기존 문자열 입력과 `lat=...`, `lon=...` 호출은 호환 유지
+- 응답 모델은 `raw`를 보존하면서 enum/좌표 property를 제공
 
 ## 테스트 매트릭스
 

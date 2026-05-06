@@ -16,12 +16,21 @@ from pyairkorea._convert import (
 )
 from pyairkorea._http import HttpClient, SessionLike
 from pyairkorea.codes import (
+    DataTerm,
+    InformCode,
+    Pollutant,
+    SidoName,
+    StatsDataGubun,
+    StatsSearchCondition,
     grade_label,
     normalize_data_term,
     normalize_inform_code,
+    normalize_pollutant_code,
+    normalize_stats_data_gubun,
+    normalize_stats_search_condition,
     validate_sido_name,
 )
-from pyairkorea.coords import wgs84_to_tm
+from pyairkorea.coords import LatLon, TmPoint, resolve_airkorea_tm
 from pyairkorea.exceptions import AirKoreaParseError
 from pyairkorea.models import (
     AdvisoryOccurrence,
@@ -160,7 +169,7 @@ class AirKoreaClient:
         self,
         station_name: str,
         *,
-        data_term: str = "DAILY",
+        data_term: str | DataTerm = DataTerm.DAILY,
         page_no: int = 1,
         num_of_rows: int = 100,
         ver: str = "1.3",
@@ -183,7 +192,7 @@ class AirKoreaClient:
         self,
         station_name: str,
         *,
-        data_term: str = "DAILY",
+        data_term: str | DataTerm = DataTerm.DAILY,
         ver: str = "1.3",
     ) -> AirQualityMeasurement | None:
         """Return the first measurement row for a station, or ``None`` when empty."""
@@ -198,7 +207,7 @@ class AirKoreaClient:
 
     def sido_measurements(
         self,
-        sido_name: str,
+        sido_name: str | SidoName,
         *,
         page_no: int = 1,
         num_of_rows: int = 100,
@@ -238,7 +247,7 @@ class AirKoreaClient:
         self,
         *,
         search_date: str | date | None = None,
-        inform_code: str | None = None,
+        inform_code: str | InformCode | Pollutant | None = None,
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[ForecastNotice]:
@@ -298,6 +307,8 @@ class AirKoreaClient:
     def nearby_stations(
         self,
         *,
+        coordinate: LatLon | tuple[float, float] | Mapping[str, Any] | None = None,
+        tm: TmPoint | tuple[float, float] | Mapping[str, Any] | None = None,
         tm_x: float | None = None,
         tm_y: float | None = None,
         lat: float | None = None,
@@ -306,12 +317,19 @@ class AirKoreaClient:
     ) -> list[NearbyStation]:
         """Fetch monitoring stations near a TM coordinate or WGS84 latitude/longitude."""
 
-        query_x, query_y = _coordinates(tm_x=tm_x, tm_y=tm_y, lat=lat, lon=lon)
+        query = resolve_airkorea_tm(
+            coordinate=coordinate,
+            tm=tm,
+            tm_x=tm_x,
+            tm_y=tm_y,
+            lat=lat,
+            lon=lon,
+        )
         body = self._station(
             "getNearbyMsrstnList",
             {
-                "tmX": query_x,
-                "tmY": query_y,
+                "tmX": query.tm_x,
+                "tmY": query.tm_y,
                 "ver": ver,
             },
         )
@@ -339,14 +357,15 @@ class AirKoreaClient:
     def measurement_near(
         self,
         *,
-        lat: float,
-        lon: float,
-        data_term: str = "DAILY",
+        coordinate: LatLon | tuple[float, float] | Mapping[str, Any] | None = None,
+        lat: float | None = None,
+        lon: float | None = None,
+        data_term: str | DataTerm = DataTerm.DAILY,
         ver: str = "1.3",
     ) -> AirQualityMeasurement | None:
         """Find the nearest station to WGS84 coordinates and return its latest measurement."""
 
-        stations = self.nearby_stations(lat=lat, lon=lon)
+        stations = self.nearby_stations(coordinate=coordinate, lat=lat, lon=lon)
         if not stations:
             return None
         return self.latest_station_measurement(
@@ -358,9 +377,9 @@ class AirKoreaClient:
     def sido_average_stats(
         self,
         *,
-        item_code: str,
-        data_gubun: str = "HOUR",
-        search_condition: str = "WEEK",
+        item_code: str | Pollutant,
+        data_gubun: str | StatsDataGubun = StatsDataGubun.HOUR,
+        search_condition: str | StatsSearchCondition = StatsSearchCondition.WEEK,
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[AirQualityStat]:
@@ -369,9 +388,9 @@ class AirKoreaClient:
         body = self._stats(
             "getCtprvnMesureLIst",
             {
-                "itemCode": _normalize_item_code(item_code),
-                "dataGubun": _upper_text(data_gubun, "data_gubun"),
-                "searchCondition": _upper_text(search_condition, "search_condition"),
+                "itemCode": normalize_pollutant_code(item_code),
+                "dataGubun": normalize_stats_data_gubun(data_gubun),
+                "searchCondition": normalize_stats_search_condition(search_condition),
                 "pageNo": page_no,
                 "numOfRows": num_of_rows,
             },
@@ -382,9 +401,9 @@ class AirKoreaClient:
         self,
         sido_name: str,
         *,
-        item_code: str | None = None,
-        data_gubun: str | None = None,
-        search_condition: str = "HOUR",
+        item_code: str | Pollutant | None = None,
+        data_gubun: str | StatsDataGubun | None = None,
+        search_condition: str | StatsSearchCondition = StatsSearchCondition.HOUR,
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[AirQualityStat]:
@@ -394,9 +413,9 @@ class AirKoreaClient:
             "getCtprvnMesureSidoLIst",
             {
                 "sidoName": _required_text(sido_name, "sido_name"),
-                "itemCode": _normalize_item_code(item_code),
-                "dataGubun": _optional_upper(data_gubun),
-                "searchCondition": _upper_text(search_condition, "search_condition"),
+                "itemCode": normalize_pollutant_code(item_code),
+                "dataGubun": _optional_stats_data_gubun(data_gubun),
+                "searchCondition": normalize_stats_search_condition(search_condition),
                 "pageNo": page_no,
                 "numOfRows": num_of_rows,
             },
@@ -491,7 +510,7 @@ class AirKoreaClient:
         self,
         year: int | str,
         *,
-        item_code: str | None = None,
+        item_code: str | Pollutant | None = None,
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[DustAlarm]:
@@ -501,7 +520,10 @@ class AirKoreaClient:
             "getUlfptcaAlarmInfo",
             {
                 "year": _year_param(year),
-                "itemCode": _normalize_item_code(item_code),
+                "itemCode": normalize_pollutant_code(
+                    item_code,
+                    allowed=(Pollutant.PM10, Pollutant.PM25),
+                ),
                 "pageNo": page_no,
                 "numOfRows": num_of_rows,
             },
@@ -961,26 +983,6 @@ def _english_station(row: Mapping[str, Any]) -> EnglishStation:
         raise AirKoreaParseError(f"malformed English station item: {row!r}") from exc
 
 
-def _coordinates(
-    *,
-    tm_x: float | None,
-    tm_y: float | None,
-    lat: float | None,
-    lon: float | None,
-) -> tuple[float, float]:
-    has_tm = tm_x is not None or tm_y is not None
-    has_latlon = lat is not None or lon is not None
-    if has_tm and has_latlon:
-        raise ValueError("Provide either tm_x/tm_y or lat/lon, not both")
-    if has_tm:
-        if tm_x is None or tm_y is None:
-            raise ValueError("Both tm_x and tm_y are required")
-        return tm_x, tm_y
-    if lat is None or lon is None:
-        raise ValueError("Either tm_x/tm_y or lat/lon is required")
-    return wgs84_to_tm(lat, lon)
-
-
 def _required_text(value: Any, field: str) -> str:
     text = strip_or_none(value)
     if text is None:
@@ -988,20 +990,10 @@ def _required_text(value: Any, field: str) -> str:
     return text
 
 
-def _upper_text(value: Any, field: str) -> str:
-    return _required_text(value, field).upper()
-
-
-def _optional_upper(value: str | None) -> str | None:
-    text = strip_or_none(value)
-    return text.upper() if text is not None else None
-
-
-def _normalize_item_code(value: str | None) -> str | None:
-    text = strip_or_none(value)
-    if text is None:
+def _optional_stats_data_gubun(value: str | StatsDataGubun | None) -> str | None:
+    if value is None:
         return None
-    return text.upper().replace("PM2.5", "PM25")
+    return normalize_stats_data_gubun(value)
 
 
 def _date_param(value: str | date | None) -> str | None:

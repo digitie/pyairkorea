@@ -7,6 +7,9 @@ from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import Any
 
+from pyairkorea.codes import AirQualityGrade, InformCode, Pollutant
+from pyairkorea.coords import LatLon
+
 RawRecord = Mapping[str, Any]
 
 
@@ -39,6 +42,10 @@ class AirQualityMeasurement:
     pm25_grade_1h: int | None
     raw: RawRecord = field(repr=False)
 
+    @property
+    def khai_grade_enum(self) -> AirQualityGrade | None:
+        return AirQualityGrade.from_code(self.khai_grade)
+
 
 @dataclass(frozen=True)
 class Station:
@@ -52,6 +59,12 @@ class Station:
     lat: float | None
     lon: float | None
     raw: RawRecord = field(repr=False)
+
+    @property
+    def coordinates(self) -> LatLon | None:
+        if self.lat is None or self.lon is None:
+            return None
+        return LatLon(self.lat, self.lon)
 
 
 @dataclass(frozen=True)
@@ -90,6 +103,13 @@ class ForecastNotice:
     image_urls: tuple[str, ...]
     raw: RawRecord = field(repr=False)
 
+    @property
+    def inform_code_enum(self) -> InformCode | None:
+        try:
+            return InformCode(self.inform_code)
+        except ValueError:
+            return None
+
 
 @dataclass(frozen=True)
 class WeeklyForecastNotice:
@@ -126,6 +146,13 @@ class AirQualityStat:
     pm25_value: float | None
     region_values: Mapping[str, float | None] = field(default_factory=dict, repr=False)
     raw: RawRecord = field(repr=False, default_factory=dict)
+
+    @property
+    def item_code_enum(self) -> Pollutant | None:
+        try:
+            return Pollutant(self.item_code)
+        except ValueError:
+            return None
 
 
 @dataclass(frozen=True)
@@ -164,6 +191,13 @@ class DustAlarm:
     clear_value: float | None
     raw: RawRecord = field(repr=False)
 
+    @property
+    def item_code_enum(self) -> Pollutant | None:
+        try:
+            return Pollutant(self.item_code)
+        except ValueError:
+            return None
+
 
 @dataclass(frozen=True)
 class TrafficStat:
@@ -200,6 +234,10 @@ class CaiMeasurement:
     khai_grade_label: str | None
     main_pollutant: str | None
     raw: RawRecord = field(repr=False)
+
+    @property
+    def khai_grade_enum(self) -> AirQualityGrade | None:
+        return AirQualityGrade.from_code(self.khai_grade)
 
 
 @dataclass(frozen=True)
@@ -238,6 +276,10 @@ class EnglishAirQualityMeasurement:
     pm25_value: float | None
     raw: RawRecord = field(repr=False)
 
+    @property
+    def khai_grade_enum(self) -> AirQualityGrade | None:
+        return AirQualityGrade.from_code(self.khai_grade)
+
 
 @dataclass(frozen=True)
 class EnglishStation:
@@ -250,3 +292,9 @@ class EnglishStation:
     lat: float | None
     lon: float | None
     raw: RawRecord = field(repr=False)
+
+    @property
+    def coordinates(self) -> LatLon | None:
+        if self.lat is None or self.lon is None:
+            return None
+        return LatLon(self.lat, self.lon)

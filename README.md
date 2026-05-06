@@ -2,7 +2,7 @@
 
 한국환경공단 AirKorea OpenAPI를 Python에서 쓰기 쉽게 감싼 비공식 클라이언트입니다.
 
-`pyairkorea`는 공공데이터포털의 AirKorea 계열 B552584 OpenAPI를 dataclass 기반의 안정적인 Python 객체로 변환합니다. 2026-04-30 기준으로 확인한 AirKorea 대기오염정보, 측정소정보, 통계, 오존/황사, 미세먼지 경보, 사용자 지원, 고농도 PM2.5 예보, CAI, 국가배경농도 합성데이터, 영문 측정정보/측정소정보 서비스를 구현했습니다.
+`pyairkorea`는 공공데이터포털의 AirKorea 계열 B552584 OpenAPI를 dataclass 기반 Python 객체로 변환합니다. 외부 프로그램에서 안정적으로 붙일 수 있도록 문자열 입력은 계속 지원하면서 enum, 좌표 값 객체, 표준화 helper를 제공합니다.
 
 ## 설치
 
@@ -30,28 +30,63 @@ PowerShell:
 $env:AIRKOREA_SERVICE_KEY="발급받은_인증키"
 ```
 
-`requests.get(..., params=...)`로 호출하므로 보통 Decoding 인증키 사용을 권장합니다. 인증 오류가 나면 Encoding/Decoding 키를 모두 확인하세요.
-
 ## 빠른 사용
 
 ```python
-from pyairkorea import AirKoreaClient
+from pyairkorea import AirKoreaClient, DataTerm, SidoName
 
 air = AirKoreaClient.from_env()
 
-latest = air.latest_station_measurement("종로구")
-if latest:
-    print(latest.data_time, latest.pm10_value, latest.pm25_value, latest.khai_grade_label)
-
-for row in air.sido_measurements("서울", num_of_rows=5):
-    print(row.station_name, row.pm10_value, row.pm25_value)
+latest = air.latest_station_measurement("종로구", data_term=DataTerm.DAILY)
+for row in air.sido_measurements(SidoName.SEOUL, num_of_rows=5):
+    print(row.station_name, row.pm10_value, row.pm25_value, row.khai_grade_enum)
 ```
 
-좌표로 가까운 측정소를 찾고 최신 측정값을 가져올 수도 있습니다.
+좌표는 `LatLon`을 권장합니다. 기존 `lat=..., lon=...` 호출도 계속 지원합니다.
 
 ```python
-measurement = air.measurement_near(lat=37.5665, lon=126.9780)
+from pyairkorea import LatLon
+
+seoul_city_hall = LatLon(37.5665, 126.9780)
+nearby = air.nearby_stations(coordinate=seoul_city_hall)
+measurement = air.measurement_near(coordinate=seoul_city_hall)
 ```
+
+## 라이브러리 친화 API
+
+| 구분 | 제공 타입 |
+|---|---|
+| 측정 기간 | `DataTerm` |
+| 예보 코드 | `InformCode` |
+| 오염물질 코드 | `Pollutant` |
+| 시도명 | `SidoName` |
+| 통계 단위 | `StatsDataGubun`, `StatsSearchCondition` |
+| 대기질 등급 | `AirQualityGrade` |
+| 위경도 | `LatLon` |
+| AirKorea TM 좌표 | `TmPoint` |
+
+enum은 `str` 기반이라 기존 문자열 코드와 잘 섞입니다.
+
+```python
+from pyairkorea import Pollutant, StatsDataGubun, StatsSearchCondition
+
+stats = air.sido_average_stats(
+    item_code=Pollutant.PM25,
+    data_gubun=StatsDataGubun.HOUR,
+    search_condition=StatsSearchCondition.WEEK,
+)
+alarms = air.dust_alarms(2026, item_code=Pollutant.PM10)
+```
+
+응답 모델도 외부 프로그램에서 후처리하기 쉽게 enum/좌표 property를 제공합니다.
+
+```python
+station = air.stations(station_name="종로구")[0]
+print(station.coordinates)        # LatLon(...) or None
+print(latest.khai_grade_enum)     # AirQualityGrade.MODERATE or None
+```
+
+자세한 라이브러리 사용 지침은 [docs/library-surface.md](docs/library-surface.md)를 확인하세요.
 
 ## 지원 API
 
@@ -70,18 +105,6 @@ measurement = air.measurement_near(lat=37.5665, lon=126.9780)
 | 측정소 영문 정보 조회 | `english_stations` |
 
 전체 endpoint 목록과 정확한 철자는 [airkorea-api.md](airkorea-api.md)를 확인하세요.
-
-## 예시
-
-```python
-from datetime import date
-
-stats = air.sido_average_stats(item_code="PM10", data_gubun="HOUR")
-alarms = air.dust_alarms(2026, item_code="PM25")
-ozone = air.ozone_advisories(year=2026)
-traffic = air.traffic_stats(date(2026, 4, 30))
-english = air.english_stations(station_name="Sangdae")
-```
 
 ## CLI
 
@@ -110,12 +133,11 @@ python -m mypy pyairkorea
 ## 문서
 
 - [airkorea-api.md](airkorea-api.md): 공식 API 목록, endpoint, 메서드 매핑
+- [docs/library-surface.md](docs/library-surface.md): 외부 프로그램 연동용 타입/좌표 지침
 - [docs/implementation-status.md](docs/implementation-status.md): 구현/테스트 현황
 - [docs/testing.md](docs/testing.md): 테스트 원칙
 - [docs/repeated-mistakes.md](docs/repeated-mistakes.md): 반복 실수 방지 로그
 - [docs/troubleshooting.md](docs/troubleshooting.md): 오류별 점검표
-- [SKILL.md](SKILL.md): 이후 에이전트가 따라야 할 구현 규칙
-- [AGENTS.md](AGENTS.md): 협업/작업 규칙
 
 ## 범위
 
