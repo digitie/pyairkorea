@@ -47,6 +47,9 @@ pyairkorea = "pyairkorea.cli:main"
 [tool.setuptools.packages.find]
 include = ["pyairkorea*"]
 
+[tool.setuptools.package-data]
+pyairkorea = ["py.typed"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py39"

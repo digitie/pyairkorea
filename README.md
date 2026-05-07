@@ -87,6 +87,38 @@ print(latest.khai_grade_enum)     # AirQualityGrade.MODERATE or None
 print(latest.model_dump())        # Pydantic dict
 ```
 
+원본 endpoint를 직접 호출해야 할 때는 `call()`이 페이지 메타데이터와 인증키가 제거된 호출 context를 함께 반환합니다.
+
+```python
+page = air.call(
+    "MsrstnInfoInqireSvc",
+    "getMsrstnList",
+    {"addr": "서울"},
+    num_of_rows=10,
+)
+
+print(page.items)              # tuple[Mapping[str, Any], ...]
+print(page.has_next_page)      # pageNo/numOfRows/totalCount 기반
+print(page.request_params)     # serviceKey 제외
+```
+
+여러 페이지는 `iter_pages()`로 순회합니다.
+
+```python
+for page in air.iter_pages("MsrstnInfoInqireSvc", "getMsrstnList", {"addr": "서울"}):
+    for raw_station in page.items:
+        print(raw_station["stationName"])
+```
+
+캐시 키나 로그용 파라미터가 필요하면 인증키 제거 helper를 사용할 수 있습니다.
+
+```python
+from pyairkorea import make_cache_key, sanitize_request_params
+
+safe_params = sanitize_request_params({"serviceKey": "secret", "addr": "서울"})
+cache_key = make_cache_key("getMsrstnList", safe_params, service_name="MsrstnInfoInqireSvc")
+```
+
 자세한 라이브러리 사용 지침은 [docs/library-surface.md](docs/library-surface.md)를 확인하세요.
 
 ## 지원 API

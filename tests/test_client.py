@@ -304,3 +304,94 @@ def test_malformed_measurement_raises_parse_error() -> None:
 
     with pytest.raises(AirKoreaParseError):
         client.station_measurements("종로구")
+
+
+def test_call_returns_raw_page_with_sanitized_context() -> None:
+    session = FakeSession(
+        [
+            FakeResponse(
+                json_data=payload(
+                    {"stationName": "Jongno-gu"},
+                    body_extra={"pageNo": "1", "numOfRows": "1", "totalCount": "2"},
+                )
+            )
+        ]
+    )
+    client = AirKoreaClient("KEY", session=session, retries=0)
+
+    page = client.call(
+        "msrstninfoinqiresvc",
+        "getMsrstnList",
+        {"addr": "Seoul", "returnType": "xml", "serviceKey": "SHOULD_NOT_LEAK"},
+        num_of_rows=1,
+    )
+
+    assert page.items == ({"stationName": "Jongno-gu"},)
+    assert page.total_count == 2
+    assert page.page_no == 1
+    assert page.num_of_rows == 1
+    assert page.has_next_page
+    assert page.next_page_no == 2
+    assert page.service_name == "MsrstnInfoInqireSvc"
+    assert page.endpoint == "getMsrstnList"
+    assert page.request_params == {
+        "returnType": "json",
+        "addr": "Seoul",
+        "pageNo": 1,
+        "numOfRows": 1,
+    }
+    assert session.last_call.url.endswith("/MsrstnInfoInqireSvc/getMsrstnList")
+    assert session.last_call.params["serviceKey"] == "KEY"
+    assert session.last_call.params["returnType"] == "json"
+    assert session.last_call.params["addr"] == "Seoul"
+    assert session.last_call.params["numOfRows"] == 1
+
+
+def test_call_uses_service_key_capitalization_for_user_support_service() -> None:
+    session = FakeSession([FakeResponse(json_data=payload([]))])
+    client = AirKoreaClient("KEY", session=session, retries=0)
+
+    page = client.call(
+        "UserSportSvc",
+        "getSvckeyDalyStats",
+        {"searchDate": "2026-04-30"},
+    )
+
+    assert page.items == ()
+    assert "ServiceKey" in session.last_call.params
+    assert "serviceKey" not in session.last_call.params
+
+
+def test_iter_pages_follows_total_count_metadata() -> None:
+    session = FakeSession(
+        [
+            FakeResponse(
+                json_data=payload(
+                    [{"stationName": "first"}],
+                    body_extra={"pageNo": 1, "numOfRows": 1, "totalCount": 2},
+                )
+            ),
+            FakeResponse(
+                json_data=payload(
+                    [{"stationName": "second"}],
+                    body_extra={"pageNo": 2, "numOfRows": 1, "totalCount": 2},
+                )
+            ),
+        ]
+    )
+    client = AirKoreaClient("KEY", session=session, retries=0)
+
+    pages = list(client.iter_pages("MsrstnInfoInqireSvc", "getMsrstnList", num_of_rows=1))
+
+    assert [page.items[0]["stationName"] for page in pages] == ["first", "second"]
+    assert [call.params["pageNo"] for call in session.calls] == [1, 2]
+
+
+def test_call_rejects_unknown_service_or_endpoint() -> None:
+    client = AirKoreaClient("KEY", session=FakeSession([]), retries=0)
+
+    with pytest.raises(ValueError):
+        client.call("missing", "getMsrstnList")
+
+    with pytest.raises(ValueError):
+        client.call("MsrstnInfoInqireSvc", "missing")

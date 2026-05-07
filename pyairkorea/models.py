@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from datetime import date, datetime
-from typing import Any
+from datetime import date, datetime, timezone
+from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -12,12 +12,66 @@ from pyairkorea.codes import AirQualityGrade, InformCode, Pollutant
 from pyairkorea.coords import LatLon
 
 RawRecord = Mapping[str, Any]
+T = TypeVar("T")
 
 
 class AirKoreaModel(BaseModel):
     """Base class for immutable pyairkorea response models."""
 
     model_config = ConfigDict(frozen=True)
+
+
+class AirKoreaCallContext(AirKoreaModel):
+    """Sanitized metadata describing the API call that produced a response."""
+
+    provider: str = "data.go.kr"
+    service_name: str | None = None
+    endpoint: str | None = None
+    request_params: RawRecord = Field(default_factory=dict)
+    collected_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class AirKoreaPage(AirKoreaModel, Generic[T]):
+    """A paginated raw AirKorea response page."""
+
+    items: tuple[T, ...]
+    total_count: int
+    page_no: int
+    num_of_rows: int
+    raw: RawRecord = Field(repr=False)
+    context: AirKoreaCallContext = Field(default_factory=AirKoreaCallContext)
+
+    @property
+    def is_empty(self) -> bool:
+        return not self.items
+
+    @property
+    def has_next_page(self) -> bool:
+        if self.page_no < 1 or self.num_of_rows < 1 or self.total_count < 1:
+            return False
+        return self.page_no * self.num_of_rows < self.total_count
+
+    @property
+    def next_page_no(self) -> int | None:
+        if not self.has_next_page:
+            return None
+        return self.page_no + 1
+
+    @property
+    def service_name(self) -> str | None:
+        return self.context.service_name
+
+    @property
+    def endpoint(self) -> str | None:
+        return self.context.endpoint
+
+    @property
+    def request_params(self) -> RawRecord:
+        return self.context.request_params
+
+    @property
+    def collected_at(self) -> datetime:
+        return self.context.collected_at
 
 
 class AirQualityMeasurement(AirKoreaModel):

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- `AirKoreaClient.call()` raw endpoint 호출과 `iter_pages()` 페이지 순회를 추가했습니다.
+- `AirKoreaPage`, `AirKoreaCallContext`로 원본 item, page metadata, sanitized request context를 보존합니다.
+- `sanitize_request_params()`, `make_cache_key()` 등 인증키 제거 metadata helper를 공개했습니다.
+- PEP 561 `py.typed` marker가 배포 산출물에 포함되도록 package-data 설정을 명시했습니다.
+
 ## 0.4.0
 
 - 응답 모델을 dataclass에서 Pydantic v2 `BaseModel` 기반으로 전환했습니다.

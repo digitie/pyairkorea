@@ -20,6 +20,8 @@ python -m mypy pyairkorea
 - 숫자 문자열, 날짜 문자열, KST 시각 문자열을 타입으로 변환한다.
 - 신규 API는 확인된 필드만 파싱하고 `raw` 보존을 전제로 한다.
 - 서비스 목록은 `SUPPORTED_ENDPOINTS`와 `tests/test_expanded_api.py`가 서로 맞아야 한다.
+- raw `call()`/`iter_pages()`는 인증키성 params를 실제 요청과 context에서 제거하고, `pageNo` 순회를 fixture로 검증한다.
+- public API를 새로 추가하면 `tests/test_public_api.py`의 권장 export 목록도 함께 갱신한다.
 
 ## Live API 테스트 기준
 

@@ -79,6 +79,58 @@ print(station.coordinates)
 - `Station.coordinates`
 - `EnglishStation.coordinates`
 
+## Raw page와 페이지 순회
+
+일반적인 사용은 typed convenience method(`stations()`, `sido_measurements()` 등)를 권장합니다. 아직 typed model이 충분하지 않거나, 응답의 `pageNo`/`numOfRows`/`totalCount` 같은 원본 페이지 메타데이터가 필요하면 `AirKoreaClient.call()`을 사용합니다.
+
+```python
+page = air.call(
+    "MsrstnInfoInqireSvc",
+    "getMsrstnList",
+    {"addr": "서울"},
+    num_of_rows=10,
+)
+
+page.items          # tuple[RawRecord, ...]
+page.raw            # response.body 원본 mapping
+page.has_next_page  # pageNo/numOfRows/totalCount 기반
+page.next_page_no   # 다음 pageNo 또는 None
+page.context        # AirKoreaCallContext
+```
+
+`call()`은 `SUPPORTED_ENDPOINTS`에 등록된 서비스/endpoint만 호출합니다. 서비스명은 대소문자 차이를 허용하지만 endpoint 철자는 공식 철자를 그대로 요구합니다. 특히 `getCtprvnMesureLIst`, `getCtprvnMesureSidoLIst`, `getMsrstnAcctoRMmrg`는 문서 철자를 유지합니다.
+
+여러 페이지를 가져올 때는 `iter_pages()`를 사용합니다.
+
+```python
+for page in air.iter_pages(
+    "MsrstnInfoInqireSvc",
+    "getMsrstnList",
+    {"addr": "서울"},
+    num_of_rows=100,
+    max_pages=5,
+):
+    for row in page.items:
+        print(row["stationName"])
+```
+
+모듈 수준 helper도 공개 API입니다.
+
+- `has_next_page(body)`
+- `next_page_no(body)`
+- `iter_paginated_pages(fetch_page, ...)`
+
+## Call context와 캐시 키
+
+`AirKoreaCallContext.request_params`는 `serviceKey`, `ServiceKey`, `api_key`, `auth_key` 같은 인증키성 파라미터를 저장하지 않습니다. 로그, 캐시 키, fixture metadata에 그대로 써도 키가 남지 않도록 보수적으로 제거합니다.
+
+```python
+from pyairkorea import make_cache_key, sanitize_request_params
+
+safe_params = sanitize_request_params({"serviceKey": "secret", "addr": "서울"})
+cache_key = make_cache_key("getMsrstnList", safe_params, service_name="MsrstnInfoInqireSvc")
+```
+
 ## 정규화 helper
 
 외부 프로그램에서 사용자 입력을 먼저 검증하고 싶다면 helper를 직접 사용할 수 있습니다.

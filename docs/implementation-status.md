@@ -26,6 +26,8 @@
 | enum/코드 정규화 | `pyairkorea/codes.py` |
 | 좌표 값 객체/좌표 변환 | `pyairkorea/coords.py` |
 | HTTP envelope/result-code 처리 | `pyairkorea/_http.py` |
+| 호출 context/캐시 키 | `pyairkorea/metadata.py` |
+| 페이지 순회 helper | `pyairkorea/pagination.py` |
 | Pydantic 응답 모델 | `pyairkorea/models.py` |
 | 값 변환 | `pyairkorea/_convert.py` |
 
@@ -35,6 +37,8 @@
 - 좌표 입력: WGS84는 `LatLon(lat, lon)`, AirKorea TM은 `TmPoint(tm_x, tm_y)`
 - 기존 문자열 입력과 `lat=...`, `lon=...` 호출은 호환 유지
 - 응답 모델은 Pydantic v2 `BaseModel` 기반이며 `raw`를 보존하면서 enum/좌표 property를 제공
+- raw escape hatch: `AirKoreaClient.call()`과 `iter_pages()`는 `SUPPORTED_ENDPOINTS` 내 endpoint를 원본 page로 반환
+- provenance/cache helper: `AirKoreaCallContext`, `sanitize_request_params`, `make_cache_key`
 
 ## 테스트 매트릭스
 
@@ -47,6 +51,9 @@
 | `tests/test_codes.py` | 등급, 시도명, 예보코드, dataTerm 검증 |
 | `tests/test_coords.py` | WGS84/AirKorea TM 변환 |
 | `tests/test_cli.py` | CLI JSON 출력과 인자 처리 |
+| `tests/test_metadata.py` | 인증키 제거, call context, cache key |
+| `tests/test_pagination.py` | pageNo/numOfRows/totalCount 기반 순회 |
+| `tests/test_public_api.py` | 권장 public API export와 `py.typed` marker |
 
 ## 필수 검증 명령
 

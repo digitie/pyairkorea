@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
 from datetime import date
 from typing import Any
 
@@ -32,8 +32,10 @@ from pyairkorea.codes import (
 )
 from pyairkorea.coords import LatLon, TmPoint, resolve_airkorea_tm
 from pyairkorea.exceptions import AirKoreaParseError
+from pyairkorea.metadata import is_credential_param, make_call_context
 from pyairkorea.models import (
     AdvisoryOccurrence,
+    AirKoreaPage,
     AirQualityMeasurement,
     AirQualityStat,
     BackgroundConcentration,
@@ -44,11 +46,13 @@ from pyairkorea.models import (
     ForecastNotice,
     HighPm25Forecast,
     NearbyStation,
+    RawRecord,
     Station,
     TmCoordinate,
     TrafficStat,
     WeeklyForecastNotice,
 )
+from pyairkorea.pagination import iter_paginated_pages
 
 DEFAULT_POLLUTION_BASE_URL = "http://apis.data.go.kr/B552584/ArpltnInforInqireSvc"
 DEFAULT_STATION_BASE_URL = "http://apis.data.go.kr/B552584/MsrstnInfoInqireSvc"
@@ -648,6 +652,75 @@ class AirKoreaClient:
         )
         return [_english_station(row) for row in _items(body)]
 
+    def call(
+        self,
+        service_name: str,
+        endpoint: str,
+        params: Mapping[str, Any] | None = None,
+        *,
+        page_no: int | None = 1,
+        num_of_rows: int | None = 100,
+    ) -> AirKoreaPage[RawRecord]:
+        """Call a supported endpoint and return raw item records with page metadata."""
+
+        canonical_service_name, canonical_endpoint = _validate_supported_endpoint(
+            service_name,
+            endpoint,
+        )
+        request_params = _page_params(
+            _without_reserved_call_params(params),
+            page_no=page_no,
+            num_of_rows=num_of_rows,
+        )
+        body = self._http.get_body(
+            self._base_url_for_service(canonical_service_name),
+            canonical_endpoint,
+            request_params,
+            service_key_param=_service_key_param(canonical_service_name),
+        )
+        return _raw_page(
+            body,
+            service_name=canonical_service_name,
+            endpoint=canonical_endpoint,
+            request_params={"returnType": "json", **request_params},
+        )
+
+    def iter_pages(
+        self,
+        service_name: str,
+        endpoint: str,
+        params: Mapping[str, Any] | None = None,
+        *,
+        page_no: int = 1,
+        num_of_rows: int = 100,
+        max_pages: int | None = None,
+        max_items: int | None = None,
+    ) -> Iterator[AirKoreaPage[RawRecord]]:
+        """Iterate raw pages for a supported endpoint."""
+
+        canonical_service_name, canonical_endpoint = _validate_supported_endpoint(
+            service_name,
+            endpoint,
+        )
+        base_params = _without_page_params(params)
+
+        def fetch_page(next_page_no: int, page_size: int) -> AirKoreaPage[RawRecord]:
+            return self.call(
+                canonical_service_name,
+                canonical_endpoint,
+                base_params,
+                page_no=next_page_no,
+                num_of_rows=page_size,
+            )
+
+        return iter_paginated_pages(
+            fetch_page,
+            page_no=page_no,
+            num_of_rows=num_of_rows,
+            max_pages=max_pages,
+            max_items=max_items,
+        )
+
     def _pollution(self, endpoint: str, params: Mapping[str, Any]) -> Mapping[str, Any]:
         return self._http.get_body(self.pollution_base_url, endpoint, params)
 
@@ -686,6 +759,21 @@ class AirKoreaClient:
     def _english_station(self, endpoint: str, params: Mapping[str, Any]) -> Mapping[str, Any]:
         return self._http.get_body(self.english_station_base_url, endpoint, params)
 
+    def _base_url_for_service(self, service_name: str) -> str:
+        return {
+            "ArpltnInforInqireSvc": self.pollution_base_url,
+            "MsrstnInfoInqireSvc": self.station_base_url,
+            "ArpltnStatsSvc": self.stats_base_url,
+            "OzYlwsndOccrrncInforInqireSvc": self.occurrence_base_url,
+            "UlfptcaAlarmInqireSvc": self.alarm_base_url,
+            "UserSportSvc": self.user_support_base_url,
+            "MinuDustFrcstDspthSvc": self.high_pm25_forecast_base_url,
+            "RltmKhaiInfoSvc": self.cai_base_url,
+            "arpltsNtnBkgrDnstSyrdt": self.background_base_url,
+            "atmstMsrstnRltmInfo": self.english_measurement_base_url,
+            "atmstMsrstnInfoEngNm": self.english_station_base_url,
+        }[service_name]
+
 
 def _items(body: Mapping[str, Any]) -> list[Mapping[str, Any]]:
     raw_items = body.get("items")
@@ -700,6 +788,101 @@ def _items(body: Mapping[str, Any]) -> list[Mapping[str, Any]]:
     if isinstance(raw_items, list) and all(isinstance(item, Mapping) for item in raw_items):
         return raw_items
     raise AirKoreaParseError("response.body.items must be an object or list")
+
+
+def _raw_page(
+    body: Mapping[str, Any],
+    *,
+    service_name: str,
+    endpoint: str,
+    request_params: Mapping[str, Any],
+) -> AirKoreaPage[RawRecord]:
+    items = tuple(_items(body))
+    page_no = _int_from_mapping(
+        body,
+        "pageNo",
+        default=_int_from_mapping(request_params, "pageNo", default=1),
+    )
+    num_of_rows = _int_from_mapping(
+        body,
+        "numOfRows",
+        default=_int_from_mapping(request_params, "numOfRows", default=len(items)),
+    )
+    total_count = _int_from_mapping(body, "totalCount", default=len(items))
+    return AirKoreaPage[RawRecord](
+        items=items,
+        total_count=total_count,
+        page_no=page_no,
+        num_of_rows=num_of_rows,
+        raw=body,
+        context=make_call_context(
+            service_name=service_name,
+            endpoint=endpoint,
+            request_params=request_params,
+        ),
+    )
+
+
+def _validate_supported_endpoint(service_name: str, endpoint: str) -> tuple[str, str]:
+    canonical_service_name = _canonical_service_name(service_name)
+    endpoints = SUPPORTED_ENDPOINTS[canonical_service_name]
+    if endpoint not in endpoints:
+        known = ", ".join(endpoints)
+        raise ValueError(
+            f"{canonical_service_name} does not support endpoint {endpoint!r}; known: {known}"
+        )
+    return canonical_service_name, endpoint
+
+
+def _canonical_service_name(service_name: str) -> str:
+    if service_name in SUPPORTED_ENDPOINTS:
+        return service_name
+    lookup = {name.lower(): name for name in SUPPORTED_ENDPOINTS}
+    try:
+        return lookup[service_name.lower()]
+    except KeyError as exc:
+        known = ", ".join(SUPPORTED_ENDPOINTS)
+        raise ValueError(f"unknown AirKorea service {service_name!r}; known: {known}") from exc
+
+
+def _service_key_param(service_name: str) -> str:
+    return "ServiceKey" if service_name == "UserSportSvc" else "serviceKey"
+
+
+def _page_params(
+    params: Mapping[str, Any] | None,
+    *,
+    page_no: int | None,
+    num_of_rows: int | None,
+) -> dict[str, Any]:
+    request_params = dict(params or {})
+    if page_no is not None:
+        request_params["pageNo"] = page_no
+    if num_of_rows is not None:
+        request_params["numOfRows"] = num_of_rows
+    return request_params
+
+
+def _without_page_params(params: Mapping[str, Any] | None) -> dict[str, Any]:
+    cleaned = dict(params or {})
+    cleaned.pop("pageNo", None)
+    cleaned.pop("numOfRows", None)
+    return cleaned
+
+
+def _without_reserved_call_params(params: Mapping[str, Any] | None) -> dict[str, Any]:
+    return {
+        str(key): value
+        for key, value in (params or {}).items()
+        if not is_credential_param(str(key)) and str(key) != "returnType"
+    }
+
+
+def _int_from_mapping(mapping: Mapping[str, Any], key: str, *, default: int) -> int:
+    try:
+        return int(str(mapping.get(key, default)).strip())
+    except (TypeError, ValueError):
+        return default
 
 
 def _measurement(row: Mapping[str, Any]) -> AirQualityMeasurement:
