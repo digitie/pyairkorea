@@ -56,4 +56,4 @@
 - `getCtprvnMesureLIst`와 `getCtprvnMesureSidoLIst`의 `LIst` 대소문자를 바꾸지 않는다.
 - 월평균은 `getMsrstnAcctoRMmrg`다.
 - 영문 서비스는 `atmstMsrstnRltmInfo/getList`, `atmstMsrstnInfoEngNm/getList`다.
-- `pyairkorea.client.SUPPORTED_ENDPOINTS`와 [airkorea-api.md](../airkorea-api.md)를 먼저 확인한다.
+- `pyairkorea.client.SUPPORTED_ENDPOINTS`와 `airkorea-api.md`를 먼저 확인한다.

@@ -1,4 +1,4 @@
-"""Type conversion helpers for raw AirKorea values."""
+"""AirKorea 원본 값의 타입 변환 헬퍼."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ _EMPTY_TEXTS = {"", "-", "null", "none", "nan"}
 
 
 def strip_or_none(value: Any) -> str | None:
-    """Strip a raw API value and normalize blank placeholders to ``None``."""
+    """원본 API 값을 정리하고 빈 placeholder를 ``None``으로 정규화합니다."""
 
     if value is None:
         return None
@@ -52,7 +52,7 @@ def to_date_or_none(value: Any) -> date | None:
 
 
 def parse_data_time(value: Any) -> datetime | None:
-    """Parse common AirKorea KST data-time strings into aware datetimes."""
+    """AirKorea의 흔한 KST 날짜/시간 문자열을 시간대 포함 datetime으로 파싱합니다."""
 
     text = strip_or_none(value)
     if text is None:

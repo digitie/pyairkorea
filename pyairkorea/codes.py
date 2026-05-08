@@ -1,4 +1,4 @@
-"""AirKorea code labels, enums, and parameter validators."""
+"""AirKorea 코드 라벨, enum, 파라미터 검증 헬퍼."""
 
 from __future__ import annotations
 
@@ -8,14 +8,14 @@ from typing import Any
 
 
 class _AirKoreaStrEnum(str, Enum):
-    """String enum that remains friendly to existing string-based code."""
+    """기존 문자열 기반 코드와 자연스럽게 섞이는 문자열 enum."""
 
     def __str__(self) -> str:
         return str(self.value)
 
 
 class AirQualityGrade(IntEnum):
-    """AirKorea air-quality grade code."""
+    """AirKorea 대기질 등급 코드."""
 
     GOOD = 1
     MODERATE = 2
@@ -35,7 +35,7 @@ class AirQualityGrade(IntEnum):
 
 
 class DataTerm(_AirKoreaStrEnum):
-    """Measurement history range accepted by station measurement APIs."""
+    """측정소 측정정보 API가 받는 측정 이력 기간."""
 
     DAILY = "DAILY"
     MONTH = "MONTH"
@@ -43,7 +43,7 @@ class DataTerm(_AirKoreaStrEnum):
 
 
 class InformCode(_AirKoreaStrEnum):
-    """Forecast notice pollutant code."""
+    """예보 통보문 오염물질 코드."""
 
     PM10 = "PM10"
     PM25 = "PM25"
@@ -51,7 +51,7 @@ class InformCode(_AirKoreaStrEnum):
 
 
 class Pollutant(_AirKoreaStrEnum):
-    """AirKorea pollutant/item code."""
+    """AirKorea 오염물질/item 코드."""
 
     SO2 = "SO2"
     CO = "CO"
@@ -63,7 +63,7 @@ class Pollutant(_AirKoreaStrEnum):
 
 
 class SidoName(_AirKoreaStrEnum):
-    """Korean city/province names accepted by AirKorea APIs."""
+    """AirKorea API가 받는 시도명."""
 
     SEOUL = "서울"
     BUSAN = "부산"
@@ -85,7 +85,7 @@ class SidoName(_AirKoreaStrEnum):
 
 
 class StatsDataGubun(_AirKoreaStrEnum):
-    """Statistics aggregation unit."""
+    """통계 집계 단위."""
 
     HOUR = "HOUR"
     DAILY = "DAILY"
@@ -93,7 +93,7 @@ class StatsDataGubun(_AirKoreaStrEnum):
 
 
 class StatsSearchCondition(_AirKoreaStrEnum):
-    """Statistics search window/condition."""
+    """통계 조회 기간/조건."""
 
     HOUR = "HOUR"
     DAILY = "DAILY"
@@ -133,7 +133,7 @@ _POLLUTANT_ALIASES = {
 
 
 def grade_label(value: Any) -> str | None:
-    """Return the Korean grade label for AirKorea grade codes 1-4."""
+    """AirKorea 등급 코드 1-4에 대한 한글 라벨을 반환합니다."""
 
     grade = AirQualityGrade.from_code(value)
     return grade.label if grade is not None else None

@@ -168,6 +168,7 @@ python -m mypy pyairkorea
 - [airkorea-api.md](airkorea-api.md): 공식 API 목록, endpoint, 메서드 매핑
 - [docs/library-surface.md](docs/library-surface.md): 외부 프로그램 연동용 타입/좌표 지침
 - [docs/implementation-status.md](docs/implementation-status.md): 구현/테스트 현황
+- [docs/documentation-style.md](docs/documentation-style.md): 문서와 Python 내부 문서 작성 규칙
 - [docs/testing.md](docs/testing.md): 테스트 원칙
 - [docs/repeated-mistakes.md](docs/repeated-mistakes.md): 반복 실수 방지 로그
 - [docs/troubleshooting.md](docs/troubleshooting.md): 오류별 점검표

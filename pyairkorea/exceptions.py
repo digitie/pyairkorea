@@ -1,35 +1,35 @@
-"""Exception hierarchy for pyairkorea."""
+"""pyairkorea 예외 계층."""
 
 from __future__ import annotations
 
 
 class AirKoreaError(Exception):
-    """Base exception for all pyairkorea errors."""
+    """모든 pyairkorea 오류의 기본 예외."""
 
 
 class AirKoreaAuthError(AirKoreaError):
-    """Authentication failed or the service key is missing/invalid."""
+    """인증이 실패했거나 서비스키가 없거나 올바르지 않습니다."""
 
 
 class AirKoreaRequestError(AirKoreaError):
-    """The request parameters are invalid or the API rejected the request."""
+    """요청 파라미터가 올바르지 않거나 API가 요청을 거절했습니다."""
 
 
 class AirKoreaNoDataError(AirKoreaRequestError):
-    """The API returned its no-data result code."""
+    """API가 데이터 없음 결과 코드를 반환했습니다."""
 
 
 class AirKoreaRateLimitError(AirKoreaRequestError):
-    """The API rejected the request due to quota or rate limits."""
+    """쿼터 또는 호출 제한 때문에 API가 요청을 거절했습니다."""
 
 
 class AirKoreaNetworkError(AirKoreaError):
-    """A network error occurred while calling AirKorea."""
+    """AirKorea 호출 중 네트워크 오류가 발생했습니다."""
 
 
 class AirKoreaServerError(AirKoreaError):
-    """AirKorea returned a server-side or otherwise transient failure."""
+    """AirKorea가 서버 측 또는 일시적 실패를 반환했습니다."""
 
 
 class AirKoreaParseError(AirKoreaError):
-    """An AirKorea response could not be parsed into the expected structure."""
+    """AirKorea 응답을 기대한 구조로 파싱할 수 없습니다."""

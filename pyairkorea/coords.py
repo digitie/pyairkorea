@@ -1,4 +1,4 @@
-"""Coordinate value objects and conversion helpers for AirKorea TM requests."""
+"""AirKorea TM 요청을 위한 좌표 값 객체와 변환 헬퍼."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ WGS84_CRS = "EPSG:4326"
 
 @dataclass(frozen=True)
 class LatLon:
-    """WGS84 latitude/longitude pair in the canonical ``lat, lon`` order."""
+    """WGS84 위경도 쌍을 표준 ``lat, lon`` 순서로 표현합니다."""
 
     lat: float
     lon: float
@@ -38,7 +38,7 @@ class LatLon:
 
 @dataclass(frozen=True)
 class TmPoint:
-    """AirKorea TM coordinate pair in the canonical ``tm_x, tm_y`` order."""
+    """AirKorea TM 좌표 쌍을 표준 ``tm_x, tm_y`` 순서로 표현합니다."""
 
     tm_x: float
     tm_y: float
@@ -76,10 +76,10 @@ def coerce_latlon(
     lat: float | None = None,
     lon: float | None = None,
 ) -> LatLon:
-    """Normalize a WGS84 coordinate input to ``LatLon``.
+    """WGS84 좌표 입력을 ``LatLon``으로 정규화합니다.
 
-    Accepted forms are ``LatLon``, ``(lat, lon)``, mappings with
-    ``lat``/``lon`` or ``latitude``/``longitude``, or explicit keyword pairs.
+    허용 형식은 ``LatLon``, ``(lat, lon)``, ``lat``/``lon`` 또는
+    ``latitude``/``longitude`` mapping, 명시적 keyword 쌍입니다.
     """
 
     if value is not None and (lat is not None or lon is not None):
@@ -106,7 +106,7 @@ def coerce_tm_point(
     tm_x: float | None = None,
     tm_y: float | None = None,
 ) -> TmPoint:
-    """Normalize an AirKorea TM coordinate input to ``TmPoint``."""
+    """AirKorea TM 좌표 입력을 ``TmPoint``로 정규화합니다."""
 
     if value is not None and (tm_x is not None or tm_y is not None):
         raise ValueError("Provide either TM value or tm_x/tm_y keywords, not both")
@@ -135,7 +135,7 @@ def resolve_airkorea_tm(
     tm_x: float | None = None,
     tm_y: float | None = None,
 ) -> TmPoint:
-    """Resolve either WGS84 or TM inputs to an AirKorea TM query point."""
+    """WGS84 또는 TM 입력을 AirKorea TM 조회 좌표로 해석합니다."""
 
     has_wgs84 = coordinate is not None or lat is not None or lon is not None
     has_tm = tm is not None or tm_x is not None or tm_y is not None
@@ -154,11 +154,11 @@ def wgs84_to_tm(
     *,
     target_crs: str = DEFAULT_AIRKOREA_TM_CRS,
 ) -> tuple[float, float]:
-    """Convert WGS84 latitude/longitude to AirKorea legacy TM coordinates.
+    """WGS84 위경도를 AirKorea 레거시 TM 좌표로 변환합니다.
 
-    AirKorea's nearby-station endpoint documents TM central-belt coordinates.
-    Historical AirKorea examples align with EPSG:2097. If you already have
-    road-address API coordinates, pass those directly to the client instead.
+    AirKorea 근접 측정소 endpoint는 TM 중부원점 좌표를 문서화합니다.
+    기존 AirKorea 예제는 EPSG:2097과 맞습니다. 도로명주소 API 좌표를
+    이미 가지고 있다면 변환하지 말고 클라이언트에 직접 넘기세요.
     """
 
     validate_latlon(lat, lon)
@@ -173,7 +173,7 @@ def tm_to_wgs84(
     *,
     source_crs: str = DEFAULT_AIRKOREA_TM_CRS,
 ) -> tuple[float, float]:
-    """Convert AirKorea legacy TM coordinates to WGS84 latitude/longitude."""
+    """AirKorea 레거시 TM 좌표를 WGS84 위경도로 변환합니다."""
 
     transformer = _transformer(source_crs, WGS84_CRS)
     lon, lat = transformer.transform(tm_x, tm_y)
@@ -192,6 +192,6 @@ def _mapping_float(mapping: Mapping[str, Any], *keys: str) -> float:
 def _transformer(source_crs: str, target_crs: str):  # type: ignore[no-untyped-def]
     try:
         from pyproj import Transformer
-    except ModuleNotFoundError as exc:  # pragma: no cover - dependency is required by package
+    except ModuleNotFoundError as exc:  # pragma: no cover - 패키지 필수 의존성
         raise RuntimeError("pyproj is required for AirKorea coordinate conversion") from exc
     return Transformer.from_crs(source_crs, target_crs, always_xy=True)

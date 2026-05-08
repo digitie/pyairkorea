@@ -1,4 +1,4 @@
-"""HTTP helper with AirKorea/public-data error mapping."""
+"""AirKorea/data.go.kr 오류 매핑을 포함한 HTTP 헬퍼."""
 
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ TRANSIENT_STATUSES = {500, 502, 503, 504}
 
 
 class HttpClient:
-    """Small request wrapper shared by both AirKorea service groups."""
+    """AirKorea 서비스군이 공유하는 작은 요청 래퍼."""
 
     def __init__(
         self,

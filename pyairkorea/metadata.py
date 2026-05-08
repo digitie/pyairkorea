@@ -1,4 +1,4 @@
-"""Public metadata and sanitization helpers for AirKorea responses."""
+"""AirKorea 응답용 공개 메타데이터와 인증키 제거 헬퍼."""
 
 from __future__ import annotations
 
@@ -22,13 +22,13 @@ _CREDENTIAL_PARAM_NAMES = {
 
 
 def is_credential_param(name: str) -> bool:
-    """Return whether a request parameter name usually carries credentials."""
+    """요청 파라미터 이름이 보통 인증 정보를 담는지 반환합니다."""
 
     return name.replace("-", "_").lower() in _CREDENTIAL_PARAM_NAMES
 
 
 def sanitize_request_params(params: Mapping[str, Any]) -> dict[str, Any]:
-    """Return request params with credential-bearing keys removed."""
+    """인증 정보가 담긴 key를 제거한 요청 파라미터를 반환합니다."""
 
     sanitized: dict[str, Any] = {}
     for key, value in params.items():
@@ -47,7 +47,7 @@ def make_call_context(
     collected_at: datetime | None = None,
     provider: str = "data.go.kr",
 ) -> AirKoreaCallContext:
-    """Build sanitized provenance metadata for an AirKorea response."""
+    """AirKorea 응답의 인증키 제거 출처 메타데이터를 만듭니다."""
 
     kwargs: dict[str, Any] = {
         "provider": provider,
@@ -67,7 +67,7 @@ def make_cache_key(
     service_name: str | None = None,
     namespace: str = "pyairkorea:v1",
 ) -> str:
-    """Return a stable cache key from endpoint and sanitized request inputs."""
+    """endpoint와 인증키 제거 요청 입력으로 안정적인 캐시 키를 반환합니다."""
 
     payload = {
         "service_name": service_name,

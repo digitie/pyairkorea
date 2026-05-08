@@ -1,4 +1,4 @@
-"""Python client for Korea Environment Corporation AirKorea APIs."""
+"""한국환경공단 AirKorea API용 Python 클라이언트."""
 
 from pyairkorea.client import SUPPORTED_ENDPOINTS, AirKoreaClient
 from pyairkorea.codes import (

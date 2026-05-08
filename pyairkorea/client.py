@@ -1,4 +1,4 @@
-"""Public AirKorea API client."""
+"""AirKorea 공개 API 클라이언트."""
 
 from __future__ import annotations
 
@@ -120,7 +120,7 @@ _REGION_KEYS = (
 
 
 class AirKoreaClient:
-    """Client for Korea Environment Corporation AirKorea public APIs."""
+    """한국환경공단 AirKorea 공개 API 클라이언트."""
 
     def __init__(
         self,
@@ -178,7 +178,7 @@ class AirKoreaClient:
         num_of_rows: int = 100,
         ver: str = "1.3",
     ) -> list[AirQualityMeasurement]:
-        """Fetch real-time measurements for one monitoring station."""
+        """측정소 하나의 실시간 대기질 측정값을 조회합니다."""
 
         body = self._pollution(
             "getMsrstnAcctoRltmMesureDnsty",
@@ -199,7 +199,7 @@ class AirKoreaClient:
         data_term: str | DataTerm = DataTerm.DAILY,
         ver: str = "1.3",
     ) -> AirQualityMeasurement | None:
-        """Return the first measurement row for a station, or ``None`` when empty."""
+        """측정소의 첫 측정값을 반환하고, 결과가 없으면 ``None``을 반환합니다."""
 
         rows = self.station_measurements(
             station_name,
@@ -217,7 +217,7 @@ class AirKoreaClient:
         num_of_rows: int = 100,
         ver: str = "1.3",
     ) -> list[AirQualityMeasurement]:
-        """Fetch real-time measurements for all stations in one sido."""
+        """시도 하나에 속한 모든 측정소의 실시간 측정값을 조회합니다."""
 
         body = self._pollution(
             "getCtprvnRltmMesureDnsty",
@@ -236,7 +236,7 @@ class AirKoreaClient:
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[AirQualityMeasurement]:
-        """Fetch stations where the CAI grade is unhealthy or worse."""
+        """통합대기환경지수 등급이 나쁨 이상인 측정소를 조회합니다."""
 
         body = self._pollution(
             "getUnityAirEnvrnIdexSnstiveAboveMsrstnList",
@@ -255,7 +255,7 @@ class AirKoreaClient:
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[ForecastNotice]:
-        """Fetch fine-dust or ozone forecast notices."""
+        """미세먼지 또는 오존 예보 통보문을 조회합니다."""
 
         body = self._pollution(
             "getMinuDustFrcstDspth",
@@ -275,7 +275,7 @@ class AirKoreaClient:
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[WeeklyForecastNotice]:
-        """Fetch weekly PM2.5 forecast notices."""
+        """주간 PM2.5 예보 통보문을 조회합니다."""
 
         body = self._pollution(
             "getMinuDustWeekFrcstDspth",
@@ -295,7 +295,7 @@ class AirKoreaClient:
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[Station]:
-        """Fetch monitoring-station metadata."""
+        """대기질 측정소 메타데이터를 조회합니다."""
 
         body = self._station(
             "getMsrstnList",
@@ -319,7 +319,7 @@ class AirKoreaClient:
         lon: float | None = None,
         ver: str | None = None,
     ) -> list[NearbyStation]:
-        """Fetch monitoring stations near a TM coordinate or WGS84 latitude/longitude."""
+        """TM 좌표 또는 WGS84 위경도 주변의 측정소를 조회합니다."""
 
         query = resolve_airkorea_tm(
             coordinate=coordinate,
@@ -346,7 +346,7 @@ class AirKoreaClient:
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[TmCoordinate]:
-        """Fetch AirKorea TM reference coordinates by eup/myeon/dong name."""
+        """읍/면/동 이름으로 AirKorea TM 기준 좌표를 조회합니다."""
 
         body = self._station(
             "getTMStdrCrdnt",
@@ -367,7 +367,7 @@ class AirKoreaClient:
         data_term: str | DataTerm = DataTerm.DAILY,
         ver: str = "1.3",
     ) -> AirQualityMeasurement | None:
-        """Find the nearest station to WGS84 coordinates and return its latest measurement."""
+        """WGS84 좌표에서 가장 가까운 측정소의 최신 측정값을 반환합니다."""
 
         stations = self.nearby_stations(coordinate=coordinate, lat=lat, lon=lon)
         if not stations:
@@ -387,7 +387,7 @@ class AirKoreaClient:
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[AirQualityStat]:
-        """Fetch real-time average statistics by city/province."""
+        """시도별 실시간 평균 통계를 조회합니다."""
 
         body = self._stats(
             "getCtprvnMesureLIst",
@@ -411,7 +411,7 @@ class AirKoreaClient:
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[AirQualityStat]:
-        """Fetch real-time average statistics by city/county/district."""
+        """시군구별 실시간 평균 통계를 조회합니다."""
 
         body = self._stats(
             "getCtprvnMesureSidoLIst",
@@ -435,7 +435,7 @@ class AirKoreaClient:
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[AirQualityStat]:
-        """Fetch real-time daily averages for a monitoring station."""
+        """측정소별 실시간 일평균 통계를 조회합니다."""
 
         body = self._stats(
             "getMsrstnAcctoRDyrg",
@@ -458,7 +458,7 @@ class AirKoreaClient:
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[AirQualityStat]:
-        """Fetch real-time monthly averages for a monitoring station."""
+        """측정소별 실시간 월평균 통계를 조회합니다."""
 
         body = self._stats(
             "getMsrstnAcctoRMmrg",
@@ -479,7 +479,7 @@ class AirKoreaClient:
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[AdvisoryOccurrence]:
-        """Fetch ozone advisory occurrence information."""
+        """오존 주의보 발생 정보를 조회합니다."""
 
         body = self._occurrence(
             "getOzAdvsryOccrrncInfo",
@@ -498,7 +498,7 @@ class AirKoreaClient:
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[AdvisoryOccurrence]:
-        """Fetch yellow-dust advisory occurrence information."""
+        """황사 주의보 발생 정보를 조회합니다."""
 
         body = self._occurrence(
             "getYlwsndAdvsryOccrrncInfo",
@@ -518,7 +518,7 @@ class AirKoreaClient:
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[DustAlarm]:
-        """Fetch PM10/PM2.5 advisory and warning status."""
+        """PM10/PM2.5 주의보와 경보 현황을 조회합니다."""
 
         body = self._alarm(
             "getUlfptcaAlarmInfo",
@@ -541,7 +541,7 @@ class AirKoreaClient:
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[TrafficStat]:
-        """Fetch daily traffic counts for the current service key."""
+        """현재 서비스키의 일별 API 트래픽 통계를 조회합니다."""
 
         body = self._user_support(
             "getSvckeyDalyStats",
@@ -560,7 +560,7 @@ class AirKoreaClient:
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[HighPm25Forecast]:
-        """Fetch high-concentration PM2.5 (>50 ug/m3) forecasts."""
+        """고농도 PM2.5(50 ug/m3 초과) 예보를 조회합니다."""
 
         body = self._high_pm25_forecast(
             "getMinuDustFrcstDspth50Over",
@@ -579,7 +579,7 @@ class AirKoreaClient:
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[CaiMeasurement]:
-        """Fetch real-time comprehensive air quality index (CAI) rows."""
+        """실시간 통합대기환경지수(CAI) 행을 조회합니다."""
 
         body = self._cai(
             "getMsrstnKhaiRltmDnsty",
@@ -599,7 +599,7 @@ class AirKoreaClient:
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[BackgroundConcentration]:
-        """Fetch synthetic national-background concentration rows."""
+        """국가배경농도 합성데이터 행을 조회합니다."""
 
         body = self._background(
             "getList",
@@ -619,7 +619,7 @@ class AirKoreaClient:
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[EnglishAirQualityMeasurement]:
-        """Fetch English real-time measurement rows."""
+        """영문 실시간 측정정보 행을 조회합니다."""
 
         body = self._english_measurement(
             "getList",
@@ -639,7 +639,7 @@ class AirKoreaClient:
         page_no: int = 1,
         num_of_rows: int = 100,
     ) -> list[EnglishStation]:
-        """Fetch English monitoring-station metadata rows."""
+        """영문 측정소 메타데이터 행을 조회합니다."""
 
         body = self._english_station(
             "getList",
@@ -661,7 +661,7 @@ class AirKoreaClient:
         page_no: int | None = 1,
         num_of_rows: int | None = 100,
     ) -> AirKoreaPage[RawRecord]:
-        """Call a supported endpoint and return raw item records with page metadata."""
+        """지원 endpoint를 호출하고 페이지 메타데이터와 원본 item을 반환합니다."""
 
         canonical_service_name, canonical_endpoint = _validate_supported_endpoint(
             service_name,
@@ -696,7 +696,7 @@ class AirKoreaClient:
         max_pages: int | None = None,
         max_items: int | None = None,
     ) -> Iterator[AirKoreaPage[RawRecord]]:
-        """Iterate raw pages for a supported endpoint."""
+        """지원 endpoint의 원본 페이지를 순회합니다."""
 
         canonical_service_name, canonical_endpoint = _validate_supported_endpoint(
             service_name,

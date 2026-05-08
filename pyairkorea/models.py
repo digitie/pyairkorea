@@ -1,4 +1,4 @@
-"""Public Pydantic models returned by the AirKorea client."""
+"""AirKorea 클라이언트가 반환하는 공개 Pydantic 모델."""
 
 from __future__ import annotations
 
@@ -16,13 +16,13 @@ T = TypeVar("T")
 
 
 class AirKoreaModel(BaseModel):
-    """Base class for immutable pyairkorea response models."""
+    """변경 불가능한 pyairkorea 응답 모델의 기본 클래스."""
 
     model_config = ConfigDict(frozen=True)
 
 
 class AirKoreaCallContext(AirKoreaModel):
-    """Sanitized metadata describing the API call that produced a response."""
+    """응답을 만든 API 호출을 설명하는 인증키 제거 메타데이터."""
 
     provider: str = "data.go.kr"
     service_name: str | None = None
@@ -32,7 +32,7 @@ class AirKoreaCallContext(AirKoreaModel):
 
 
 class AirKoreaPage(AirKoreaModel, Generic[T]):
-    """A paginated raw AirKorea response page."""
+    """페이지 정보가 있는 AirKorea 원본 응답 페이지."""
 
     items: tuple[T, ...]
     total_count: int
@@ -75,7 +75,7 @@ class AirKoreaPage(AirKoreaModel, Generic[T]):
 
 
 class AirQualityMeasurement(AirKoreaModel):
-    """Hourly air quality measurement for one monitoring station."""
+    """측정소 하나의 시간별 대기질 측정값."""
 
     station_name: str
     data_time: datetime | None
@@ -108,7 +108,7 @@ class AirQualityMeasurement(AirKoreaModel):
 
 
 class Station(AirKoreaModel):
-    """Air quality monitoring station metadata."""
+    """대기질 측정소 메타데이터."""
 
     station_name: str
     addr: str | None
@@ -127,7 +127,7 @@ class Station(AirKoreaModel):
 
 
 class NearbyStation(AirKoreaModel):
-    """Monitoring station near a TM coordinate."""
+    """TM 좌표 주변의 측정소."""
 
     station_name: str
     addr: str | None
@@ -136,7 +136,7 @@ class NearbyStation(AirKoreaModel):
 
 
 class TmCoordinate(AirKoreaModel):
-    """AirKorea TM reference coordinate for an eup/myeon/dong name."""
+    """읍/면/동 이름에 대한 AirKorea TM 기준 좌표."""
 
     sido_name: str | None
     sgg_name: str | None
@@ -147,7 +147,7 @@ class TmCoordinate(AirKoreaModel):
 
 
 class ForecastNotice(AirKoreaModel):
-    """Fine-dust or ozone forecast notice."""
+    """미세먼지 또는 오존 예보 통보문."""
 
     data_time: str | None
     inform_code: str | None
@@ -168,7 +168,7 @@ class ForecastNotice(AirKoreaModel):
 
 
 class WeeklyForecastNotice(AirKoreaModel):
-    """Weekly PM2.5 forecast notice."""
+    """주간 PM2.5 예보 통보문."""
 
     presented_at: str | None
     first_date: str | None
@@ -183,7 +183,7 @@ class WeeklyForecastNotice(AirKoreaModel):
 
 
 class AirQualityStat(AirKoreaModel):
-    """Average/statistical air-quality row from AirKorea statistics APIs."""
+    """AirKorea 통계 API의 평균/통계 대기질 행."""
 
     data_time: datetime | None
     measurement_date: date | None
@@ -210,7 +210,7 @@ class AirQualityStat(AirKoreaModel):
 
 
 class AdvisoryOccurrence(AirKoreaModel):
-    """Ozone or yellow-dust advisory occurrence row."""
+    """오존 또는 황사 주의보 발생 행."""
 
     kind: str
     serial_number: int | None
@@ -227,7 +227,7 @@ class AdvisoryOccurrence(AirKoreaModel):
 
 
 class DustAlarm(AirKoreaModel):
-    """PM10/PM2.5 advisory or warning row."""
+    """PM10/PM2.5 주의보 또는 경보 행."""
 
     serial_number: int | None
     data_date: date | None
@@ -252,7 +252,7 @@ class DustAlarm(AirKoreaModel):
 
 
 class TrafficStat(AirKoreaModel):
-    """Daily API traffic count for an AirKorea service key."""
+    """AirKorea 서비스키의 일별 API 트래픽 통계."""
 
     connection_date: date | None
     service_name: str | None
@@ -261,7 +261,7 @@ class TrafficStat(AirKoreaModel):
 
 
 class HighPm25Forecast(AirKoreaModel):
-    """High-concentration PM2.5 forecast row."""
+    """고농도 PM2.5 예보 행."""
 
     data_time: str | None
     inform_data: date | None
@@ -272,7 +272,7 @@ class HighPm25Forecast(AirKoreaModel):
 
 
 class CaiMeasurement(AirKoreaModel):
-    """Real-time comprehensive air quality index (CAI) row."""
+    """실시간 통합대기환경지수(CAI) 행."""
 
     station_name: str | None
     station_code: str | None
@@ -290,7 +290,7 @@ class CaiMeasurement(AirKoreaModel):
 
 
 class BackgroundConcentration(AirKoreaModel):
-    """Synthetic national-background concentration row for AI test data."""
+    """국가배경농도 합성데이터 행."""
 
     measurement_date: date | None
     measurement_time: str | None
@@ -305,7 +305,7 @@ class BackgroundConcentration(AirKoreaModel):
 
 
 class EnglishAirQualityMeasurement(AirKoreaModel):
-    """English real-time measurement row."""
+    """영문 실시간 측정정보 행."""
 
     station_name: str | None
     station_name_english: str | None
@@ -329,7 +329,7 @@ class EnglishAirQualityMeasurement(AirKoreaModel):
 
 
 class EnglishStation(AirKoreaModel):
-    """English monitoring-station metadata row."""
+    """영문 측정소 메타데이터 행."""
 
     station_name: str | None
     station_name_english: str | None

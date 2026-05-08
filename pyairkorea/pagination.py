@@ -1,4 +1,4 @@
-"""Pagination helpers for data.go.kr-style AirKorea response bodies."""
+"""data.go.kr 형식 AirKorea 응답 body용 페이지 순회 헬퍼."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ T = TypeVar("T")
 
 
 def has_next_page(body: Mapping[str, Any]) -> bool:
-    """Return whether a data.go.kr response body has another page."""
+    """data.go.kr 응답 body에 다음 페이지가 있는지 반환합니다."""
 
     page_no = _int_from_body(body, "pageNo", default=1)
     num_of_rows = _int_from_body(body, "numOfRows", default=0)
@@ -22,7 +22,7 @@ def has_next_page(body: Mapping[str, Any]) -> bool:
 
 
 def next_page_no(body: Mapping[str, Any]) -> int | None:
-    """Return the next page number, or ``None`` when the body is the last page."""
+    """다음 페이지 번호를 반환하고, 마지막 페이지이면 ``None``을 반환합니다."""
 
     if not has_next_page(body):
         return None
@@ -37,7 +37,7 @@ def iter_paginated_pages(
     max_pages: int | None = None,
     max_items: int | None = None,
 ) -> Iterator[AirKoreaPage[T]]:
-    """Iterate AirKorea pages until page metadata says there is no next page."""
+    """페이지 메타데이터가 끝을 가리킬 때까지 AirKorea 페이지를 순회합니다."""
 
     _validate_pagination_input(
         page_no=page_no,
