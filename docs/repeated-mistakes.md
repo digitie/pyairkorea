@@ -68,3 +68,11 @@
 - AirKorea TM은 항상 `tm_x, tm_y` 순서다
 - `(lon, lat)` 관례를 쓰는 외부 GIS 라이브러리와 섞일 수 있으므로 public 입력에는 `LatLon` 사용을 권장한다
 - 규칙: 좌표 tuple은 `(lat, lon)`으로 문서화하고, mapping 입력은 `lat`/`lon` 또는 `latitude`/`longitude` 키를 받는다
+
+## 12. 로컬 도구/인코딩 문제를 코드 문제로 착각하지 말 것
+
+- 증상: `rg` 실행이 `Access is denied`로 실패하거나, PowerShell에서 한글 문서가 깨져 보임
+- 원인: 현재 Windows 작업 환경의 실행 권한/출력 인코딩 문제일 수 있음
+- 규칙: `rg`가 막히면 재시도에 시간을 쓰지 말고 `git ls-files`, `Get-ChildItem`, `Select-String`으로 파일 목록과 검색을 처리한다
+- 규칙: 한글 문서를 읽을 때는 `[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new(); Get-Content -Encoding UTF8 -Raw <path>`처럼 UTF-8을 명시한다
+- 규칙: 깨져 보이는 문서를 그대로 수정하지 말고, 인코딩을 명시해서 정상 표시를 확인한 뒤 편집한다

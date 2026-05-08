@@ -86,6 +86,12 @@
 - 변경은 작은 완성 단위로 만들고, 기존 사용자 변경을 되돌리지 않습니다.
 - destructive git 명령은 사용하지 않습니다.
 
+## 로컬 환경 주의
+
+- 이 Windows 작업 환경에서는 `rg`가 실행 권한 문제로 실패할 수 있습니다. `rg`가 `Access is denied`를 내면 반복 시도하지 말고 `git ls-files`, `Get-ChildItem`, `Select-String`으로 우회합니다.
+- 한글 문서를 PowerShell에서 읽을 때는 UTF-8을 명시합니다. 예: `[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new(); Get-Content -Encoding UTF8 -Raw AGENTS.md`
+- 문서가 깨져 보이면 먼저 인코딩 문제를 의심하고, 파일 내용을 잘못된 문자로 덮어쓰지 않습니다.
+
 ## 검증 기준
 
 기본 검증:
