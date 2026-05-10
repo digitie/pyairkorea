@@ -82,6 +82,8 @@
 - public method는 endpoint 하나에 명확히 매핑하고, 요청 파라미터 검증은 HTTP 호출 전에 수행합니다.
 - 값 변환은 `pyairkorea/_convert.py` helper를 재사용합니다.
 - 응답 모델은 외부 프로그램에서 쓰기 쉽게 Python 타입과 enum property를 제공하되 원본 `raw`를 보존합니다.
+- 불필요한 wrapper, adapter, compatibility layer를 만들어 차이를 숨기기보다 기존 public surface와 내부 구현에 필요한 동작을 직접 반영합니다.
+- 다른 라이브러리에서 검증된 구현 방식이나 동작 규칙이 확인되면 최소수정 원칙과 다소 어긋나더라도 임시 우회 wrapper를 추가하지 말고 해당 내용을 라이선스 허용 범위 안에서 바로 적용합니다.
 - 실제 API 호출이 필요한 테스트는 `@pytest.mark.integration`으로 분리하고 기본 테스트 경로에서는 실행하지 않습니다.
 - 변경은 작은 완성 단위로 만들고, 기존 사용자 변경을 되돌리지 않습니다.
 - destructive git 명령은 사용하지 않습니다.
