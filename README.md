@@ -6,6 +6,8 @@
 
 ## 설치
 
+Python 3.10 이상이 필요합니다.
+
 ```bash
 pip install pyairkorea
 ```
@@ -42,12 +44,13 @@ for row in air.sido_measurements(SidoName.SEOUL, num_of_rows=5):
     print(row.station_name, row.pm10_value, row.pm25_value, row.khai_grade_enum)
 ```
 
-좌표는 `LatLon`을 권장합니다. 기존 `lat=..., lon=...` 호출도 계속 지원합니다.
+좌표는 `pykrtour`의 `PlaceCoordinate`를 권장합니다. 기존 `LatLon`, tuple,
+mapping, `lat=..., lon=...` 호출도 계속 지원합니다.
 
 ```python
-from pyairkorea import LatLon
+from pyairkorea import PlaceCoordinate
 
-seoul_city_hall = LatLon(37.5665, 126.9780)
+seoul_city_hall = PlaceCoordinate(lon=126.9780, lat=37.5665)
 nearby = air.nearby_stations(coordinate=seoul_city_hall)
 measurement = air.measurement_near(coordinate=seoul_city_hall)
 ```
@@ -62,7 +65,7 @@ measurement = air.measurement_near(coordinate=seoul_city_hall)
 | 시도명 | `SidoName` |
 | 통계 단위 | `StatsDataGubun`, `StatsSearchCondition` |
 | 대기질 등급 | `AirQualityGrade` |
-| 위경도 | `LatLon` |
+| 위경도 | `PlaceCoordinate` |
 | AirKorea TM 좌표 | `TmPoint` |
 
 enum은 `str` 기반이라 기존 문자열 코드와 잘 섞입니다.
@@ -82,7 +85,7 @@ alarms = air.dust_alarms(2026, item_code=Pollutant.PM10)
 
 ```python
 station = air.stations(station_name="종로구")[0]
-print(station.coordinates)        # LatLon(...) or None
+print(station.coordinates)        # PlaceCoordinate(...) or None
 print(latest.khai_grade_enum)     # AirQualityGrade.MODERATE or None
 print(latest.model_dump())        # Pydantic dict
 ```

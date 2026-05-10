@@ -21,8 +21,8 @@
 - `pyairkorea`는 한국환경공단 AirKorea OpenAPI용 비공식 Python 클라이언트입니다.
 - 지원 범위는 공공데이터포털의 AirKorea 계열 B552584 OpenAPI이며, 비점오염원/재활용/냉매 같은 비-AirKorea 서비스는 범위 밖입니다.
 - 구현 기준 목록은 `pyairkorea/client.py`의 `SUPPORTED_ENDPOINTS`와 `airkorea-api.md`입니다.
-- Python 지원 기준은 3.9 이상입니다.
-- 런타임 의존성은 `pydantic`, `pyproj`, `requests`입니다.
+- Python 지원 기준은 3.10 이상입니다.
+- 런타임 의존성은 `pydantic`, `pykrtour`, `pyproj`, `requests`입니다.
 - 기본 테스트는 실제 AirKorea 네트워크 호출 없이 fixture/fake session으로 동작해야 합니다.
 
 ## 핵심 불변 조건
@@ -37,7 +37,8 @@
 - 신규 응답 스키마가 불확실하면 확인된 필드만 Pydantic 모델로 파싱하고 `raw`를 보존합니다.
 - 결측값 `-`, 빈 문자열, `null`, `none`, `nan`은 `None`으로 처리하고 0으로 바꾸지 않습니다.
 - enum/type을 추가할 때 기존 문자열 입력 호환성을 유지합니다.
-- WGS84 좌표는 `LatLon(lat, lon)` 순서, AirKorea TM 좌표는 `TmPoint(tm_x, tm_y)` 순서로 고정합니다.
+- WGS84 public 좌표는 `pykrtour.PlaceCoordinate(lon, lat)` 순서, AirKorea TM 좌표는 `TmPoint(tm_x, tm_y)` 순서로 고정합니다.
+- 기존 `LatLon(lat, lon)`, tuple, mapping, `lat=...`, `lon=...` 입력 호환성은 유지합니다.
 - 측정소정보의 `dmX`, `dmY`는 샘플 기준 위도/경도이며, 근접 측정소 API는 별도 TM 좌표를 요구합니다.
 
 ## 문서 라우팅
@@ -61,7 +62,7 @@
 - `pyairkorea/_http.py`: HTTP 호출, retry, resultCode 예외 매핑
 - `pyairkorea/_convert.py`: 문자열/숫자/날짜/결측값 변환 helper
 - `pyairkorea/codes.py`: enum, 코드 라벨, 입력 검증 helper
-- `pyairkorea/coords.py`: WGS84/AirKorea TM 값 객체와 좌표 변환
+- `pyairkorea/coords.py`: WGS84 호환 입력과 AirKorea TM 값 객체/좌표 변환
 - `pyairkorea/metadata.py`: 인증키 제거, 호출 context, cache key
 - `pyairkorea/pagination.py`: pageNo/numOfRows/totalCount 기반 페이지 순회 helper
 - `pyairkorea/cli.py`: CLI entrypoint

@@ -1,5 +1,7 @@
 """한국환경공단 AirKorea API용 Python 클라이언트."""
 
+from pykrtour import PlaceCoordinate
+
 from pyairkorea.client import SUPPORTED_ENDPOINTS, AirKoreaClient
 from pyairkorea.codes import (
     AirQualityGrade,
@@ -92,6 +94,7 @@ __all__ = [
     "LatLonLike",
     "NearbyStation",
     "Pollutant",
+    "PlaceCoordinate",
     "RawRecord",
     "SidoName",
     "Station",

@@ -7,7 +7,7 @@ name = "pyairkorea"
 version = "0.4.0"
 description = "Python client for Korea Environment Corporation AirKorea public APIs."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "GPL-3.0-or-later" }
 authors = [
   { name = "digitie" }
@@ -18,7 +18,6 @@ classifiers = [
   "Intended Audience :: Developers",
   "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -27,6 +26,7 @@ classifiers = [
 ]
 dependencies = [
   "pydantic>=2.7",
+  "pykrtour>=0.1.5",
   "pyproj>=3.5",
   "requests>=2.31",
 ]
@@ -52,13 +52,13 @@ pyairkorea = ["py.typed"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py39"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 strict = true
 warn_unused_ignores = true
 

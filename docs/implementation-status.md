@@ -24,7 +24,7 @@
 |---|---|
 | public client/API 목록 | `pyairkorea/client.py` |
 | enum/코드 정규화 | `pyairkorea/codes.py` |
-| 좌표 값 객체/좌표 변환 | `pyairkorea/coords.py` |
+| 좌표 호환 입력/AirKorea TM 변환 | `pyairkorea/coords.py` |
 | HTTP envelope/result-code 처리 | `pyairkorea/_http.py` |
 | 호출 context/캐시 키 | `pyairkorea/metadata.py` |
 | 페이지 순회 helper | `pyairkorea/pagination.py` |
@@ -34,8 +34,9 @@
 ## 라이브러리 표면
 
 - enum 입력: `DataTerm`, `InformCode`, `Pollutant`, `SidoName`, `StatsDataGubun`, `StatsSearchCondition`, `AirQualityGrade`
-- 좌표 입력: WGS84는 `LatLon(lat, lon)`, AirKorea TM은 `TmPoint(tm_x, tm_y)`
-- 기존 문자열 입력과 `lat=...`, `lon=...` 호출은 호환 유지
+- 좌표 입력: WGS84 public 경계는 `PlaceCoordinate(lon, lat)`, AirKorea TM은 `TmPoint(tm_x, tm_y)`
+- 기존 `LatLon(lat, lon)`, `(lat, lon)`, mapping, `lat=...`, `lon=...` 호출은 호환 유지
+- 기존 문자열 입력은 호환 유지
 - 응답 모델은 Pydantic v2 `BaseModel` 기반이며 `raw`를 보존하면서 enum/좌표 property를 제공
 - raw escape hatch: `AirKoreaClient.call()`과 `iter_pages()`는 `SUPPORTED_ENDPOINTS` 내 endpoint를 원본 page로 반환
 - provenance/cache helper: `AirKoreaCallContext`, `sanitize_request_params`, `make_cache_key`

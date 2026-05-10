@@ -5,7 +5,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Any, Union
+from typing import Any
+
+from pykrtour import PlaceCoordinate
 
 DEFAULT_AIRKOREA_TM_CRS = "EPSG:2097"
 WGS84_CRS = "EPSG:4326"
@@ -59,8 +61,8 @@ class TmPoint:
         return LatLon(lat, lon)
 
 
-LatLonLike = Union[LatLon, tuple[float, float], Mapping[str, Any]]
-TmPointLike = Union[TmPoint, tuple[float, float], Mapping[str, Any]]
+LatLonLike = PlaceCoordinate | LatLon | tuple[float, float] | Mapping[str, Any]
+TmPointLike = TmPoint | tuple[float, float] | Mapping[str, Any]
 
 
 def validate_latlon(lat: float, lon: float) -> None:
@@ -71,7 +73,7 @@ def validate_latlon(lat: float, lon: float) -> None:
 
 
 def coerce_latlon(
-    value: LatLon | tuple[float, float] | Mapping[str, Any] | None = None,
+    value: PlaceCoordinate | LatLon | tuple[float, float] | Mapping[str, Any] | None = None,
     *,
     lat: float | None = None,
     lon: float | None = None,
@@ -84,6 +86,8 @@ def coerce_latlon(
 
     if value is not None and (lat is not None or lon is not None):
         raise ValueError("Provide either coordinate value or lat/lon keywords, not both")
+    if isinstance(value, PlaceCoordinate):
+        return LatLon(value.lat, value.lon)
     if isinstance(value, LatLon):
         return value
     if isinstance(value, tuple):
@@ -128,7 +132,7 @@ def coerce_tm_point(
 
 def resolve_airkorea_tm(
     *,
-    coordinate: LatLon | tuple[float, float] | Mapping[str, Any] | None = None,
+    coordinate: PlaceCoordinate | LatLon | tuple[float, float] | Mapping[str, Any] | None = None,
     tm: TmPoint | tuple[float, float] | Mapping[str, Any] | None = None,
     lat: float | None = None,
     lon: float | None = None,
@@ -144,6 +148,9 @@ def resolve_airkorea_tm(
     if has_tm:
         return coerce_tm_point(tm, tm_x=tm_x, tm_y=tm_y)
     if has_wgs84:
+        if isinstance(coordinate, PlaceCoordinate) and lat is None and lon is None:
+            tm_point = coordinate.to_airkorea_tm()
+            return TmPoint(tm_point.tm_x, tm_point.tm_y)
         return coerce_latlon(coordinate, lat=lat, lon=lon).to_tm()
     raise ValueError("Either WGS84 coordinate or TM coordinate is required")
 

@@ -66,8 +66,8 @@
 
 - WGS84는 항상 `lat, lon` 순서다
 - AirKorea TM은 항상 `tm_x, tm_y` 순서다
-- `(lon, lat)` 관례를 쓰는 외부 GIS 라이브러리와 섞일 수 있으므로 public 입력에는 `LatLon` 사용을 권장한다
-- 규칙: 좌표 tuple은 `(lat, lon)`으로 문서화하고, mapping 입력은 `lat`/`lon` 또는 `latitude`/`longitude` 키를 받는다
+- 외부 GIS/TripMate 계열 타입과 맞추기 위해 public 좌표 경계에는 `PlaceCoordinate(lon, lat)`를 권장한다
+- 규칙: `PlaceCoordinate`는 `(lon, lat)`, 기존 좌표 tuple은 `(lat, lon)`으로 문서화하고, mapping 입력은 `lat`/`lon` 또는 `latitude`/`longitude` 키를 받는다
 
 ## 12. 로컬 도구/인코딩 문제를 코드 문제로 착각하지 말 것
 

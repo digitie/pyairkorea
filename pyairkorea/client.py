@@ -7,6 +7,8 @@ from collections.abc import Iterator, Mapping
 from datetime import date
 from typing import Any
 
+from pykrtour import PlaceCoordinate
+
 from pyairkorea._convert import (
     parse_data_time,
     strip_or_none,
@@ -311,7 +313,9 @@ class AirKoreaClient:
     def nearby_stations(
         self,
         *,
-        coordinate: LatLon | tuple[float, float] | Mapping[str, Any] | None = None,
+        coordinate: (
+            PlaceCoordinate | LatLon | tuple[float, float] | Mapping[str, Any] | None
+        ) = None,
         tm: TmPoint | tuple[float, float] | Mapping[str, Any] | None = None,
         tm_x: float | None = None,
         tm_y: float | None = None,
@@ -361,7 +365,9 @@ class AirKoreaClient:
     def measurement_near(
         self,
         *,
-        coordinate: LatLon | tuple[float, float] | Mapping[str, Any] | None = None,
+        coordinate: (
+            PlaceCoordinate | LatLon | tuple[float, float] | Mapping[str, Any] | None
+        ) = None,
         lat: float | None = None,
         lon: float | None = None,
         data_term: str | DataTerm = DataTerm.DAILY,

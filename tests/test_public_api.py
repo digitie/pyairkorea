@@ -11,6 +11,7 @@ def test_package_all_contains_recommended_public_api() -> None:
         "AirKoreaCallContext",
         "AirKoreaPage",
         "RawRecord",
+        "PlaceCoordinate",
         "LatLon",
         "TmPoint",
         "sanitize_request_params",

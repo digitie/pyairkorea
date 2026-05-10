@@ -7,9 +7,9 @@ from datetime import date, datetime, timezone
 from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
+from pykrtour import PlaceCoordinate
 
 from pyairkorea.codes import AirQualityGrade, InformCode, Pollutant
-from pyairkorea.coords import LatLon
 
 RawRecord = Mapping[str, Any]
 T = TypeVar("T")
@@ -120,10 +120,10 @@ class Station(AirKoreaModel):
     raw: RawRecord = Field(repr=False)
 
     @property
-    def coordinates(self) -> LatLon | None:
+    def coordinates(self) -> PlaceCoordinate | None:
         if self.lat is None or self.lon is None:
             return None
-        return LatLon(self.lat, self.lon)
+        return PlaceCoordinate(lon=self.lon, lat=self.lat)
 
 
 class NearbyStation(AirKoreaModel):
@@ -340,7 +340,7 @@ class EnglishStation(AirKoreaModel):
     raw: RawRecord = Field(repr=False)
 
     @property
-    def coordinates(self) -> LatLon | None:
+    def coordinates(self) -> PlaceCoordinate | None:
         if self.lat is None or self.lon is None:
             return None
-        return LatLon(self.lat, self.lon)
+        return PlaceCoordinate(lon=self.lon, lat=self.lat)
