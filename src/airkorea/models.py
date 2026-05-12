@@ -6,8 +6,8 @@ from collections.abc import Mapping
 from datetime import date, datetime, timezone
 from typing import Any, Generic, TypeVar
 
+from kraddr.base import PlaceCoordinate
 from pydantic import BaseModel, ConfigDict, Field
-from pykrtour import PlaceCoordinate
 
 from airkorea.codes import AirQualityGrade, InformCode, Pollutant
 

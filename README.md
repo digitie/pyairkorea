@@ -44,7 +44,7 @@ for row in air.sido_measurements(SidoName.SEOUL, num_of_rows=5):
     print(row.station_name, row.pm10_value, row.pm25_value, row.khai_grade_enum)
 ```
 
-좌표는 `pykrtour`의 `PlaceCoordinate`를 권장합니다. 기존 `LatLon`, tuple,
+좌표는 `kraddr.base`의 `PlaceCoordinate`를 권장합니다. 기존 `LatLon`, tuple,
 mapping, `lat=..., lon=...` 호출도 계속 지원합니다.
 
 ```python

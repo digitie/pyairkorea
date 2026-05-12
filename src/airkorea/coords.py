@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any
 
-from pykrtour import PlaceCoordinate
+from kraddr.base import PlaceCoordinate
 
 DEFAULT_AIRKOREA_TM_CRS = "EPSG:2097"
 WGS84_CRS = "EPSG:4326"

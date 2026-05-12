@@ -1,6 +1,6 @@
 """한국환경공단 AirKorea API용 Python 클라이언트."""
 
-from pykrtour import PlaceCoordinate
+from kraddr.base import PlaceCoordinate
 
 from airkorea.client import SUPPORTED_ENDPOINTS, AirKoreaClient
 from airkorea.codes import (

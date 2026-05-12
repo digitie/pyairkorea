@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from pykrtour import PlaceCoordinate
+from kraddr.base import PlaceCoordinate
 
 from airkorea.coords import (
     LatLon,

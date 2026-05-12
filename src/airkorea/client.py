@@ -7,7 +7,7 @@ from collections.abc import Iterator, Mapping
 from datetime import date
 from typing import Any
 
-from pykrtour import PlaceCoordinate
+from kraddr.base import PlaceCoordinate
 
 from airkorea._convert import (
     parse_data_time,

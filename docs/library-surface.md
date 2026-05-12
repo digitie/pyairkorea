@@ -26,7 +26,7 @@ alarms = air.dust_alarms(2026, item_code=Pollutant.PM25)
 
 ## 좌표 표준
 
-위경도 public 경계는 `pykrtour.PlaceCoordinate`를 기준으로 합니다.
+위경도 public 경계는 `kraddr.base.PlaceCoordinate`를 기준으로 합니다.
 `PlaceCoordinate`는 WGS84 `lon, lat` 저장 순서를 쓰고, AirKorea TM 좌표는
 `tm_x, tm_y` 순서입니다. 기존 `LatLon`과 tuple 호환 입력은 `lat, lon` 순서를 유지합니다.
 
