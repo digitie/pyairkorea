@@ -4,9 +4,9 @@ from datetime import date
 
 import pytest
 
-from pyairkorea import DataTerm, InformCode, PlaceCoordinate, SidoName, TmPoint
-from pyairkorea.client import AirKoreaClient
-from pyairkorea.exceptions import AirKoreaParseError
+from airkorea import DataTerm, InformCode, PlaceCoordinate, SidoName, TmPoint
+from airkorea.client import AirKoreaClient
+from airkorea.exceptions import AirKoreaParseError
 from tests.conftest import FakeResponse, FakeSession, payload
 
 

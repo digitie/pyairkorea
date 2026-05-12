@@ -5,8 +5,8 @@ from datetime import datetime
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from pyairkorea._convert import KST
-from pyairkorea.models import AirKoreaModel, AirQualityMeasurement
+from airkorea._convert import KST
+from airkorea.models import AirKoreaModel, AirQualityMeasurement
 
 
 def measurement_model() -> AirQualityMeasurement:

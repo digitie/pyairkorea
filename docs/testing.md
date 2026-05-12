@@ -1,15 +1,15 @@
 # 테스트 원칙
 
-`pyairkorea`의 기본 테스트는 네트워크 없이 항상 재현 가능해야 합니다.
+`airkorea`의 기본 테스트는 네트워크 없이 항상 재현 가능해야 합니다.
 
 ## 기본 명령
 
 ```bash
-python -m compileall pyairkorea tests
+python -m compileall src/airkorea tests
 python -m pytest
-python -m pytest --cov=pyairkorea --cov-fail-under=90
+python -m pytest --cov=airkorea --cov-fail-under=90
 python -m ruff check .
-python -m mypy pyairkorea
+python -m mypy src/airkorea
 ```
 
 ## 단위 테스트 기준

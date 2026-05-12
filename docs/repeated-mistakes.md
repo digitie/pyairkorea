@@ -6,7 +6,7 @@
 
 - 증상: 대기오염정보와 측정소정보만 구현하고 통계/경보/영문/합성데이터를 놓침
 - 원인: 공공데이터포털 검색 결과가 서비스별로 흩어져 있고, 일부 페이지는 상세기능 선택 UI 때문에 HTML에 첫 endpoint만 보임
-- 규칙: `pyairkorea.client.SUPPORTED_ENDPOINTS`를 기준 목록으로 유지하고 `tests/test_expanded_api.py`에서 서비스군 수와 핵심 endpoint를 고정 assert한다
+- 규칙: `airkorea.client.SUPPORTED_ENDPOINTS`를 기준 목록으로 유지하고 `tests/test_expanded_api.py`에서 서비스군 수와 핵심 endpoint를 고정 assert한다
 
 ## 2. Endpoint 대소문자와 오타처럼 보이는 철자를 고치지 말 것
 

@@ -1,12 +1,12 @@
 # 문서 작성 규칙
 
-`pyairkorea`의 저장소 문서와 Python 내부 문서는 한글을 기본으로 합니다. 코드 식별자와 외부 API 원문처럼 의미가 고정된 값은 원문을 보존합니다.
+`python-airkorea-api`의 저장소 문서와 Python 내부 문서는 한글을 기본으로 합니다. 코드 식별자와 외부 API 원문처럼 의미가 고정된 값은 원문을 보존합니다.
 
 ## 저장소 문서
 
 - Markdown 문서는 한글로 작성합니다.
 - 파일 위치를 적을 때는 프로젝트 루트 기준 상대 경로만 씁니다.
-- 좋은 예: `pyairkorea/client.py`, `docs/implementation-status.md`
+- 좋은 예: `src/airkorea/client.py`, `docs/implementation-status.md`
 - 로컬 시스템의 드라이브나 홈 디렉터리에서 시작하는 절대 경로는 저장소 문서에 남기지 않습니다.
 - 명령어, URL, endpoint, API 필드명, enum 값은 원문을 유지합니다.
 - API 동작이나 응답 스키마가 불확실하면 확정된 내용만 쓰고, 확인 필요 상태를 명시합니다.

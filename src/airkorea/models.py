@@ -9,14 +9,14 @@ from typing import Any, Generic, TypeVar
 from pydantic import BaseModel, ConfigDict, Field
 from pykrtour import PlaceCoordinate
 
-from pyairkorea.codes import AirQualityGrade, InformCode, Pollutant
+from airkorea.codes import AirQualityGrade, InformCode, Pollutant
 
 RawRecord = Mapping[str, Any]
 T = TypeVar("T")
 
 
 class AirKoreaModel(BaseModel):
-    """변경 불가능한 pyairkorea 응답 모델의 기본 클래스."""
+    """변경 불가능한 airkorea 응답 모델의 기본 클래스."""
 
     model_config = ConfigDict(frozen=True)
 

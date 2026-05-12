@@ -1,6 +1,6 @@
 # 라이브러리 표면 설계
 
-외부 프로그램에서 `pyairkorea`를 안정적으로 사용하기 위한 public 타입과 좌표 규칙입니다.
+외부 프로그램에서 `airkorea`를 안정적으로 사용하기 위한 public 타입과 좌표 규칙입니다.
 
 ## 문자열 호환 enum
 
@@ -17,7 +17,7 @@
 | `AirQualityGrade` | 대기질 등급 | `AirQualityGrade.MODERATE` |
 
 ```python
-from pyairkorea import AirKoreaClient, Pollutant, SidoName
+from airkorea import AirKoreaClient, Pollutant, SidoName
 
 air = AirKoreaClient.from_env()
 rows = air.sido_measurements(SidoName.SEOUL)
@@ -38,7 +38,7 @@ alarms = air.dust_alarms(2026, item_code=Pollutant.PM25)
 권장:
 
 ```python
-from pyairkorea import PlaceCoordinate
+from airkorea import PlaceCoordinate
 
 point = PlaceCoordinate(lon=126.9780, lat=37.5665)
 nearby = air.nearby_stations(coordinate=point)
@@ -47,7 +47,7 @@ nearby = air.nearby_stations(coordinate=point)
 호환 입력:
 
 ```python
-from pyairkorea import LatLon
+from airkorea import LatLon
 
 air.nearby_stations(lat=37.5665, lon=126.9780)
 air.nearby_stations(coordinate=(37.5665, 126.9780))
@@ -130,7 +130,7 @@ for page in air.iter_pages(
 `AirKoreaCallContext.request_params`는 `serviceKey`, `ServiceKey`, `api_key`, `auth_key` 같은 인증키성 파라미터를 저장하지 않습니다. 로그, 캐시 키, fixture metadata에 그대로 써도 키가 남지 않도록 보수적으로 제거합니다.
 
 ```python
-from pyairkorea import make_cache_key, sanitize_request_params
+from airkorea import make_cache_key, sanitize_request_params
 
 safe_params = sanitize_request_params({"serviceKey": "secret", "addr": "서울"})
 cache_key = make_cache_key("getMsrstnList", safe_params, service_name="MsrstnInfoInqireSvc")
@@ -141,8 +141,8 @@ cache_key = make_cache_key("getMsrstnList", safe_params, service_name="MsrstnInf
 외부 프로그램에서 사용자 입력을 먼저 검증하고 싶다면 helper를 직접 사용할 수 있습니다.
 
 ```python
-from pyairkorea.codes import normalize_pollutant_code, validate_sido_name
-from pyairkorea.coords import coerce_latlon
+from airkorea.codes import normalize_pollutant_code, validate_sido_name
+from airkorea.coords import coerce_latlon
 
 item_code = normalize_pollutant_code("pm2.5")
 sido_name = validate_sido_name("서울")

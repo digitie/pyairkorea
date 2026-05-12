@@ -1,10 +1,10 @@
-"""pyairkorea 예외 계층."""
+"""airkorea 예외 계층."""
 
 from __future__ import annotations
 
 
 class AirKoreaError(Exception):
-    """모든 pyairkorea 오류의 기본 예외."""
+    """모든 airkorea 오류의 기본 예외."""
 
 
 class AirKoreaAuthError(AirKoreaError):

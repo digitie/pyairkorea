@@ -2,7 +2,7 @@
 
 ## 역할
 
-이 문서는 Codex/agent가 `pyairkorea`에서 작업하기 전에 읽는 운영 가이드입니다. 빠르게 방향을 잡기 위한 문서이며, API 세부 명세는 `airkorea-api.md`, 구현 세부 규칙은 `SKILL.md`와 `docs/` 아래 문서를 함께 확인합니다.
+이 문서는 Codex/agent가 `python-airkorea-api`에서 작업하기 전에 읽는 운영 가이드입니다. 빠르게 방향을 잡기 위한 문서이며, API 세부 명세는 `airkorea-api.md`, 구현 세부 규칙은 `SKILL.md`와 `docs/` 아래 문서를 함께 확인합니다.
 
 ## 지시 우선순위
 
@@ -18,9 +18,10 @@
 
 ## 프로젝트 기준
 
-- `pyairkorea`는 한국환경공단 AirKorea OpenAPI용 비공식 Python 클라이언트입니다.
+- `python-airkorea-api`는 한국환경공단 AirKorea OpenAPI용 비공식 Python 클라이언트입니다.
+- Python import 이름은 `airkorea`입니다.
 - 지원 범위는 공공데이터포털의 AirKorea 계열 B552584 OpenAPI이며, 비점오염원/재활용/냉매 같은 비-AirKorea 서비스는 범위 밖입니다.
-- 구현 기준 목록은 `pyairkorea/client.py`의 `SUPPORTED_ENDPOINTS`와 `airkorea-api.md`입니다.
+- 구현 기준 목록은 `src/airkorea/client.py`의 `SUPPORTED_ENDPOINTS`와 `airkorea-api.md`입니다.
 - Python 지원 기준은 3.10 이상입니다.
 - 런타임 의존성은 `pydantic`, `pykrtour`, `pyproj`, `requests`입니다.
 - 기본 테스트는 실제 AirKorea 네트워크 호출 없이 fixture/fake session으로 동작해야 합니다.
@@ -57,21 +58,21 @@
 
 ## 모듈 지도
 
-- `pyairkorea/client.py`: public client, base URL, endpoint 목록, typed convenience method
-- `pyairkorea/models.py`: public Pydantic 응답 모델과 raw page 모델
-- `pyairkorea/_http.py`: HTTP 호출, retry, resultCode 예외 매핑
-- `pyairkorea/_convert.py`: 문자열/숫자/날짜/결측값 변환 helper
-- `pyairkorea/codes.py`: enum, 코드 라벨, 입력 검증 helper
-- `pyairkorea/coords.py`: WGS84 호환 입력과 AirKorea TM 값 객체/좌표 변환
-- `pyairkorea/metadata.py`: 인증키 제거, 호출 context, cache key
-- `pyairkorea/pagination.py`: pageNo/numOfRows/totalCount 기반 페이지 순회 helper
-- `pyairkorea/cli.py`: CLI entrypoint
+- `src/airkorea/client.py`: public client, base URL, endpoint 목록, typed convenience method
+- `src/airkorea/models.py`: public Pydantic 응답 모델과 raw page 모델
+- `src/airkorea/_http.py`: HTTP 호출, retry, resultCode 예외 매핑
+- `src/airkorea/_convert.py`: 문자열/숫자/날짜/결측값 변환 helper
+- `src/airkorea/codes.py`: enum, 코드 라벨, 입력 검증 helper
+- `src/airkorea/coords.py`: WGS84 호환 입력과 AirKorea TM 값 객체/좌표 변환
+- `src/airkorea/metadata.py`: 인증키 제거, 호출 context, cache key
+- `src/airkorea/pagination.py`: pageNo/numOfRows/totalCount 기반 페이지 순회 helper
+- `src/airkorea/cli.py`: CLI entrypoint
 - `tests/`: 네트워크 없는 fixture/fake session 기반 단위 테스트
 
 ## 문서 작성 규칙
 
 - 저장소에 남기는 문서는 한글로 작성합니다.
-- 문서에서 파일 위치를 언급할 때는 프로젝트 루트 기준 상대 경로만 씁니다. 예: `pyairkorea/client.py`, `docs/implementation-status.md`.
+- 문서에서 파일 위치를 언급할 때는 프로젝트 루트 기준 상대 경로만 씁니다. 예: `src/airkorea/client.py`, `docs/implementation-status.md`.
 - 로컬 시스템의 드라이브나 홈 디렉터리에서 시작하는 절대 경로는 실행 로그나 임시 대화에만 쓰고 저장소 문서에는 남기지 않습니다.
 - Python 내부 문서, 즉 모듈/클래스/함수/메서드 docstring과 유지보수용 설명 주석은 한글로 작성합니다.
 - API 필드명, endpoint, enum 값, 명령어, URL, 외부 오류 메시지처럼 원문 자체가 의미 있는 값은 그대로 둡니다.
@@ -81,7 +82,7 @@
 - API를 추가하거나 수정하면 코드, fixture 기반 테스트, `airkorea-api.md`, 관련 `docs/` 문서를 같은 변경 단위에서 갱신합니다.
 - 구현 전에는 `SUPPORTED_ENDPOINTS`, `airkorea-api.md`, `SKILL.md`의 관련 규칙을 확인합니다.
 - public method는 endpoint 하나에 명확히 매핑하고, 요청 파라미터 검증은 HTTP 호출 전에 수행합니다.
-- 값 변환은 `pyairkorea/_convert.py` helper를 재사용합니다.
+- 값 변환은 `src/airkorea/_convert.py` helper를 재사용합니다.
 - 응답 모델은 외부 프로그램에서 쓰기 쉽게 Python 타입과 enum property를 제공하되 원본 `raw`를 보존합니다.
 - 불필요한 wrapper, adapter, compatibility layer를 만들어 차이를 숨기기보다 기존 public surface와 내부 구현에 필요한 동작을 직접 반영합니다.
 - 다른 라이브러리에서 검증된 구현 방식이나 동작 규칙이 확인되면 최소수정 원칙과 다소 어긋나더라도 임시 우회 wrapper를 추가하지 말고 해당 내용을 라이선스 허용 범위 안에서 바로 적용합니다.
@@ -100,16 +101,16 @@
 기본 검증:
 
 ```bash
-python -m compileall pyairkorea tests
+python -m compileall src/airkorea tests
 python -m pytest
 ```
 
 커밋/푸시 전 검증:
 
 ```bash
-python -m pytest --cov=pyairkorea --cov-fail-under=90
+python -m pytest --cov=airkorea --cov-fail-under=90
 python -m ruff check .
-python -m mypy pyairkorea
+python -m mypy src/airkorea
 ```
 
 실제 API 테스트를 추가할 경우 opt-in으로 둡니다.

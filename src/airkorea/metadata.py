@@ -8,7 +8,7 @@ from collections.abc import Mapping
 from datetime import datetime
 from typing import Any
 
-from pyairkorea.models import AirKoreaCallContext
+from airkorea.models import AirKoreaCallContext
 
 _CREDENTIAL_PARAM_NAMES = {
     "apikey",
@@ -65,7 +65,7 @@ def make_cache_key(
     params: Mapping[str, Any] | None = None,
     *,
     service_name: str | None = None,
-    namespace: str = "pyairkorea:v1",
+    namespace: str = "airkorea:v1",
 ) -> str:
     """endpoint와 인증키 제거 요청 입력으로 안정적인 캐시 키를 반환합니다."""
 

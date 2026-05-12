@@ -22,14 +22,14 @@
 
 | 영역 | 파일 |
 |---|---|
-| public client/API 목록 | `pyairkorea/client.py` |
-| enum/코드 정규화 | `pyairkorea/codes.py` |
-| 좌표 호환 입력/AirKorea TM 변환 | `pyairkorea/coords.py` |
-| HTTP envelope/result-code 처리 | `pyairkorea/_http.py` |
-| 호출 context/캐시 키 | `pyairkorea/metadata.py` |
-| 페이지 순회 helper | `pyairkorea/pagination.py` |
-| Pydantic 응답 모델 | `pyairkorea/models.py` |
-| 값 변환 | `pyairkorea/_convert.py` |
+| public client/API 목록 | `src/airkorea/client.py` |
+| enum/코드 정규화 | `src/airkorea/codes.py` |
+| 좌표 호환 입력/AirKorea TM 변환 | `src/airkorea/coords.py` |
+| HTTP envelope/result-code 처리 | `src/airkorea/_http.py` |
+| 호출 context/캐시 키 | `src/airkorea/metadata.py` |
+| 페이지 순회 helper | `src/airkorea/pagination.py` |
+| Pydantic 응답 모델 | `src/airkorea/models.py` |
+| 값 변환 | `src/airkorea/_convert.py` |
 
 ## 라이브러리 표면
 
@@ -59,11 +59,11 @@
 ## 필수 검증 명령
 
 ```bash
-python -m compileall pyairkorea tests
+python -m compileall src/airkorea tests
 python -m pytest
-python -m pytest --cov=pyairkorea --cov-fail-under=90
+python -m pytest --cov=airkorea --cov-fail-under=90
 python -m ruff check .
-python -m mypy pyairkorea
+python -m mypy src/airkorea
 ```
 
 ## Live API 테스트 방침

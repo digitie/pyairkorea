@@ -1,6 +1,6 @@
 # AirKorea OpenAPI 구현 명세
 
-이 문서는 `pyairkorea`가 지원하는 공식 AirKorea OpenAPI 목록과 Python 메서드 매핑입니다. 확인 기준일은 2026-04-30입니다.
+이 문서는 `airkorea`가 지원하는 공식 AirKorea OpenAPI 목록과 Python 메서드 매핑입니다. 확인 기준일은 2026-04-30입니다.
 
 ## 공식 출처
 
@@ -44,7 +44,7 @@
 | 영문 실시간 측정정보 | `.../atmstMsrstnRltmInfo` | `getList` | `english_measurements` |
 | 측정소 영문 정보 | `.../atmstMsrstnInfoEngNm` | `getList` | `english_stations` |
 
-코드에는 같은 내용이 `pyairkorea.client.SUPPORTED_ENDPOINTS`로 고정되어 있습니다. 목록을 추가하거나 수정하면 테스트도 함께 수정해야 합니다.
+코드에는 같은 내용이 `airkorea.client.SUPPORTED_ENDPOINTS`로 고정되어 있습니다. 목록을 추가하거나 수정하면 테스트도 함께 수정해야 합니다.
 
 ## 공통 호출 규칙
 
@@ -82,7 +82,7 @@
 }
 ```
 
-AirKorea 응답은 서비스와 시점에 따라 `body.items`가 list, dict, `items.item` 중 하나로 올 수 있습니다. `pyairkorea`는 세 형태를 모두 list로 정규화합니다.
+AirKorea 응답은 서비스와 시점에 따라 `body.items`가 list, dict, `items.item` 중 하나로 올 수 있습니다. `airkorea`는 세 형태를 모두 list로 정규화합니다.
 
 ## 모델링 원칙
 

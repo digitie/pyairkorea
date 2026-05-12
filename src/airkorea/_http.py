@@ -8,7 +8,7 @@ from typing import Any, Protocol, cast
 
 import requests
 
-from pyairkorea.exceptions import (
+from airkorea.exceptions import (
     AirKoreaAuthError,
     AirKoreaNetworkError,
     AirKoreaNoDataError,

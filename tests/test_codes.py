@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from pyairkorea.codes import (
+from airkorea.codes import (
     AirQualityGrade,
     DataTerm,
     InformCode,

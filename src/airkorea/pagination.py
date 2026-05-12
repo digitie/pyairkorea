@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterator, Mapping
 from typing import Any, TypeVar
 
-from pyairkorea.models import AirKoreaPage
+from airkorea.models import AirKoreaPage
 
 T = TypeVar("T")
 

@@ -6,8 +6,8 @@ from typing import Any
 
 import pytest
 
-import pyairkorea.cli as cli
-from pyairkorea._convert import KST
+import airkorea.cli as cli
+from airkorea._convert import KST
 
 
 @dataclass(frozen=True)

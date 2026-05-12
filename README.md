@@ -1,15 +1,15 @@
-# pyairkorea
+# python-airkorea-api
 
 한국환경공단 AirKorea OpenAPI를 Python에서 쓰기 쉽게 감싼 비공식 클라이언트입니다.
 
-`pyairkorea`는 공공데이터포털의 AirKorea 계열 B552584 OpenAPI를 Pydantic v2 기반 Python 객체로 변환합니다. 외부 프로그램에서 안정적으로 붙일 수 있도록 문자열 입력은 계속 지원하면서 enum, 좌표 값 객체, 표준화 helper를 제공합니다.
+`python-airkorea-api`는 공공데이터포털의 AirKorea 계열 B552584 OpenAPI를 Pydantic v2 기반 Python 객체로 변환합니다. Python import 이름은 `airkorea`입니다. 외부 프로그램에서 안정적으로 붙일 수 있도록 문자열 입력은 계속 지원하면서 enum, 좌표 값 객체, 표준화 helper를 제공합니다.
 
 ## 설치
 
 Python 3.10 이상이 필요합니다.
 
 ```bash
-pip install pyairkorea
+pip install python-airkorea-api
 ```
 
 개발 환경:
@@ -35,7 +35,7 @@ $env:AIRKOREA_SERVICE_KEY="발급받은_인증키"
 ## 빠른 사용
 
 ```python
-from pyairkorea import AirKoreaClient, DataTerm, SidoName
+from airkorea import AirKoreaClient, DataTerm, SidoName
 
 air = AirKoreaClient.from_env()
 
@@ -48,7 +48,7 @@ for row in air.sido_measurements(SidoName.SEOUL, num_of_rows=5):
 mapping, `lat=..., lon=...` 호출도 계속 지원합니다.
 
 ```python
-from pyairkorea import PlaceCoordinate
+from airkorea import PlaceCoordinate
 
 seoul_city_hall = PlaceCoordinate(lon=126.9780, lat=37.5665)
 nearby = air.nearby_stations(coordinate=seoul_city_hall)
@@ -71,7 +71,7 @@ measurement = air.measurement_near(coordinate=seoul_city_hall)
 enum은 `str` 기반이라 기존 문자열 코드와 잘 섞입니다.
 
 ```python
-from pyairkorea import Pollutant, StatsDataGubun, StatsSearchCondition
+from airkorea import Pollutant, StatsDataGubun, StatsSearchCondition
 
 stats = air.sido_average_stats(
     item_code=Pollutant.PM25,
@@ -116,7 +116,7 @@ for page in air.iter_pages("MsrstnInfoInqireSvc", "getMsrstnList", {"addr": "서
 캐시 키나 로그용 파라미터가 필요하면 인증키 제거 helper를 사용할 수 있습니다.
 
 ```python
-from pyairkorea import make_cache_key, sanitize_request_params
+from airkorea import make_cache_key, sanitize_request_params
 
 safe_params = sanitize_request_params({"serviceKey": "secret", "addr": "서울"})
 cache_key = make_cache_key("getMsrstnList", safe_params, service_name="MsrstnInfoInqireSvc")
@@ -147,21 +147,21 @@ cache_key = make_cache_key("getMsrstnList", safe_params, service_name="MsrstnInf
 CLI는 자주 쓰는 조회를 중심으로 제공합니다. 전체 API는 Python 클라이언트에서 사용할 수 있습니다.
 
 ```bash
-pyairkorea station --station-name 종로구
-pyairkorea sido --sido-name 서울 --num-of-rows 25
-pyairkorea stations --addr 서울
-pyairkorea nearby --lat 37.5665 --lon 126.9780
-pyairkorea forecast --search-date 2026-04-30 --inform-code PM10
+airkorea station --station-name 종로구
+airkorea sido --sido-name 서울 --num-of-rows 25
+airkorea stations --addr 서울
+airkorea nearby --lat 37.5665 --lon 126.9780
+airkorea forecast --search-date 2026-04-30 --inform-code PM10
 ```
 
 ## 개발 검증
 
 ```bash
-python -m compileall pyairkorea tests
+python -m compileall src/airkorea tests
 python -m pytest
-python -m pytest --cov=pyairkorea --cov-fail-under=90
+python -m pytest --cov=airkorea --cov-fail-under=90
 python -m ruff check .
-python -m mypy pyairkorea
+python -m mypy src/airkorea
 ```
 
 실제 API 호출 테스트는 기본 테스트에 넣지 않습니다. 네트워크, 인증키, 실시간 데이터 상태가 흔들리기 때문입니다.

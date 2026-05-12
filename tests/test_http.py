@@ -3,8 +3,8 @@ from __future__ import annotations
 import pytest
 import requests
 
-from pyairkorea._http import HttpClient
-from pyairkorea.exceptions import (
+from airkorea._http import HttpClient
+from airkorea.exceptions import (
     AirKoreaAuthError,
     AirKoreaNetworkError,
     AirKoreaNoDataError,

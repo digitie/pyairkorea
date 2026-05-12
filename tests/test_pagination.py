@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from pyairkorea.models import AirKoreaPage
-from pyairkorea.pagination import has_next_page, iter_paginated_pages, next_page_no
+from airkorea.models import AirKoreaPage
+from airkorea.pagination import has_next_page, iter_paginated_pages, next_page_no
 
 
 def test_body_pagination_helpers() -> None:

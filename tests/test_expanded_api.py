@@ -4,9 +4,9 @@ from datetime import date
 
 import pytest
 
-from pyairkorea import Pollutant, StatsDataGubun, StatsSearchCondition
-from pyairkorea.client import SUPPORTED_ENDPOINTS, AirKoreaClient
-from pyairkorea.exceptions import AirKoreaParseError
+from airkorea import Pollutant, StatsDataGubun, StatsSearchCondition
+from airkorea.client import SUPPORTED_ENDPOINTS, AirKoreaClient
+from airkorea.exceptions import AirKoreaParseError
 from tests.conftest import FakeResponse, FakeSession, payload
 
 

@@ -4,7 +4,7 @@ from datetime import date
 
 import pytest
 
-from pyairkorea._convert import (
+from airkorea._convert import (
     KST,
     parse_data_time,
     strip_or_none,

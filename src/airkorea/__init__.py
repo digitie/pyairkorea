@@ -2,8 +2,8 @@
 
 from pykrtour import PlaceCoordinate
 
-from pyairkorea.client import SUPPORTED_ENDPOINTS, AirKoreaClient
-from pyairkorea.codes import (
+from airkorea.client import SUPPORTED_ENDPOINTS, AirKoreaClient
+from airkorea.codes import (
     AirQualityGrade,
     DataTerm,
     InformCode,
@@ -12,7 +12,7 @@ from pyairkorea.codes import (
     StatsDataGubun,
     StatsSearchCondition,
 )
-from pyairkorea.coords import (
+from airkorea.coords import (
     LatLon,
     LatLonLike,
     TmPoint,
@@ -23,7 +23,7 @@ from pyairkorea.coords import (
     tm_to_wgs84,
     wgs84_to_tm,
 )
-from pyairkorea.exceptions import (
+from airkorea.exceptions import (
     AirKoreaAuthError,
     AirKoreaError,
     AirKoreaNetworkError,
@@ -33,13 +33,13 @@ from pyairkorea.exceptions import (
     AirKoreaRequestError,
     AirKoreaServerError,
 )
-from pyairkorea.metadata import (
+from airkorea.metadata import (
     is_credential_param,
     make_cache_key,
     make_call_context,
     sanitize_request_params,
 )
-from pyairkorea.models import (
+from airkorea.models import (
     AdvisoryOccurrence,
     AirKoreaCallContext,
     AirKoreaModel,
@@ -60,7 +60,7 @@ from pyairkorea.models import (
     TrafficStat,
     WeeklyForecastNotice,
 )
-from pyairkorea.pagination import has_next_page, iter_paginated_pages, next_page_no
+from airkorea.pagination import has_next_page, iter_paginated_pages, next_page_no
 
 __version__ = "0.4.0"
 

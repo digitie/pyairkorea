@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from pykrtour import PlaceCoordinate
 
-from pyairkorea.coords import (
+from airkorea.coords import (
     LatLon,
     TmPoint,
     coerce_latlon,

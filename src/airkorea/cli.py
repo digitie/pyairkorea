@@ -1,4 +1,4 @@
-"""pyairkorea 명령줄 진입점."""
+"""airkorea 명령줄 진입점."""
 
 from __future__ import annotations
 
@@ -11,11 +11,11 @@ from typing import Any, cast
 
 from pydantic import BaseModel
 
-from pyairkorea.client import AirKoreaClient
+from airkorea.client import AirKoreaClient
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="pyairkorea")
+    parser = argparse.ArgumentParser(prog="airkorea")
     parser.add_argument(
         "--service-key",
         help="AirKorea decoded service key. Defaults to AIRKOREA_SERVICE_KEY.",

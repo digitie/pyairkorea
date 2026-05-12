@@ -9,15 +9,15 @@ from typing import Any
 
 from pykrtour import PlaceCoordinate
 
-from pyairkorea._convert import (
+from airkorea._convert import (
     parse_data_time,
     strip_or_none,
     to_date_or_none,
     to_float_or_none,
     to_int_or_none,
 )
-from pyairkorea._http import HttpClient, SessionLike
-from pyairkorea.codes import (
+from airkorea._http import HttpClient, SessionLike
+from airkorea.codes import (
     DataTerm,
     InformCode,
     Pollutant,
@@ -32,10 +32,10 @@ from pyairkorea.codes import (
     normalize_stats_search_condition,
     validate_sido_name,
 )
-from pyairkorea.coords import LatLon, TmPoint, resolve_airkorea_tm
-from pyairkorea.exceptions import AirKoreaParseError
-from pyairkorea.metadata import is_credential_param, make_call_context
-from pyairkorea.models import (
+from airkorea.coords import LatLon, TmPoint, resolve_airkorea_tm
+from airkorea.exceptions import AirKoreaParseError
+from airkorea.metadata import is_credential_param, make_call_context
+from airkorea.models import (
     AdvisoryOccurrence,
     AirKoreaPage,
     AirQualityMeasurement,
@@ -54,7 +54,7 @@ from pyairkorea.models import (
     TrafficStat,
     WeeklyForecastNotice,
 )
-from pyairkorea.pagination import iter_paginated_pages
+from airkorea.pagination import iter_paginated_pages
 
 DEFAULT_POLLUTION_BASE_URL = "http://apis.data.go.kr/B552584/ArpltnInforInqireSvc"
 DEFAULT_STATION_BASE_URL = "http://apis.data.go.kr/B552584/MsrstnInfoInqireSvc"

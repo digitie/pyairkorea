@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from pyairkorea.metadata import (
+from airkorea.metadata import (
     is_credential_param,
     make_cache_key,
     make_call_context,
@@ -55,4 +55,4 @@ def test_make_cache_key_is_stable_and_ignores_credentials() -> None:
     )
 
     assert first == second
-    assert first.startswith("pyairkorea:v1:")
+    assert first.startswith("airkorea:v1:")

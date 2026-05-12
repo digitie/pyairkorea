@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import importlib.resources
 
-import pyairkorea
+import airkorea
 
 
 def test_package_all_contains_recommended_public_api() -> None:
@@ -21,10 +21,10 @@ def test_package_all_contains_recommended_public_api() -> None:
         "iter_paginated_pages",
     }
 
-    assert recommended.issubset(set(pyairkorea.__all__))
+    assert recommended.issubset(set(airkorea.__all__))
 
 
 def test_py_typed_marker_is_present_in_package() -> None:
-    marker = importlib.resources.files("pyairkorea").joinpath("py.typed")
+    marker = importlib.resources.files("airkorea").joinpath("py.typed")
 
     assert marker.is_file()
