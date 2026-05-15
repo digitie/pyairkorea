@@ -2,9 +2,12 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .coverage
+.env
+.env.*
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
+.streamlit-logs/
 .streamlit-runtime/
 .venv/
 build/

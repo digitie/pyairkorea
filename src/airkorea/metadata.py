@@ -136,7 +136,7 @@ def _parse_dotenv_line(line: str) -> tuple[str, str] | None:
     if not stripped or stripped.startswith("#") or "=" not in stripped:
         return None
     key, value = stripped.split("=", 1)
-    key = key.strip()
+    key = key.strip().lstrip("\ufeff")
     if key.startswith("export "):
         key = key.removeprefix("export ").strip()
     value = _strip_dotenv_comment(value.strip())

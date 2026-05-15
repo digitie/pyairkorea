@@ -56,33 +56,41 @@ def main() -> None:
 
     with st.sidebar:
         st.subheader("API")
-        selected_function = st.selectbox("Function", method_options)
+        selected_function = st.selectbox("API", method_options)
         selected_catalog = _catalog_for_method(catalog_rows, selected_function)
-        selected_dataset = selected_catalog[0]["dataset_name"] if selected_catalog else ""
-        st.caption(selected_dataset)
-        _service_key_links(selected_catalog)
+        st.caption("API full name")
+        st.write(_api_full_name(selected_function, selected_catalog))
+        st.caption(_api_description(selected_function, selected_catalog))
+
+        loaded_key = load_service_key()
+        st.subheader("Environment")
+        environment = st.selectbox(
+            "Environment",
+            ["env", "manual"],
+            index=0 if loaded_key else 1,
+        )
 
         st.subheader("Auth")
-        loaded_key = load_service_key()
-        service_key_input = st.text_input(
-            "Service key",
-            value="",
-            type="password",
-            placeholder=".env 또는 환경변수 값을 기본 사용",
-        )
-        if loaded_key and not service_key_input:
-            st.success(".env 또는 환경변수의 서비스키를 사용합니다.")
+        if environment == "manual":
+            service_key_input = st.text_input(
+                "serviceKey",
+                value="",
+                type="password",
+                placeholder="직접 입력",
+                help="AIRKOREA_SERVICE_KEY 환경변수 또는 .env 값도 사용할 수 있습니다.",
+            )
+            effective_service_key = service_key_input
+        else:
+            effective_service_key = loaded_key
+            if loaded_key:
+                st.caption("AIRKOREA_SERVICE_KEY 값을 사용합니다. Source: process env 또는 .env")
+            else:
+                st.warning("AIRKOREA_SERVICE_KEY 값을 찾지 못했습니다.")
+        _service_key_links(selected_catalog)
+
         timeout = st.number_input("Timeout", min_value=1.0, max_value=60.0, value=10.0)
+        fixture_base_dir = _fixture_base_dir_sidebar()
 
-    input_data = _input_parameter_panel(
-        selected_function,
-        catalog_rows,
-    )
-
-    if st.button("Run", type="primary"):
-        _run(selected_function, input_data, service_key_input or loaded_key, timeout)
-
-    debug_run = st.session_state.get("debug_run")
     tabs = st.tabs(
         [
             "Raw Response",
@@ -95,27 +103,23 @@ def main() -> None:
     )
 
     with tabs[0]:
-        st.json(debug_run.response if debug_run else {})
+        _raw_response_tab(
+            selected_function,
+            selected_catalog,
+            catalog_rows,
+            effective_service_key,
+            float(timeout),
+        )
     with tabs[1]:
-        st.json(jsonable(debug_run.parsed) if debug_run else {})
+        _pydantic_model_tab(selected_function)
     with tabs[2]:
-        st.json(jsonable(debug_run.processed) if debug_run else {})
+        _processed_result_tab(selected_function)
     with tabs[3]:
-        if debug_run and debug_run.error:
-            st.json(debug_run.error)
-        elif debug_run:
-            st.success("오류 없이 실행됐습니다.")
-        else:
-            st.info("아직 실행 결과가 없습니다.")
+        _validation_errors_tab(selected_function)
     with tabs[4]:
-        if debug_run:
-            st.dataframe(list(debug_run.catalog), width="stretch")
-            _service_key_links(list(debug_run.catalog))
-            st.code("\n".join(debug_run.trace) or "trace 없음")
-        else:
-            st.dataframe(selected_catalog, width="stretch")
+        _debug_trace_tab(catalog_rows, selected_function, selected_catalog)
     with tabs[5]:
-        _fixture_tab(debug_run)
+        _fixture_tab(_current_debug_run(selected_function), fixture_base_dir)
 
 
 def _run(
@@ -124,68 +128,129 @@ def _run(
     service_key: str | None,
     timeout: float,
 ) -> None:
-    if not service_key:
+    normalized_key = normalize_service_key(service_key or "")
+    if not normalized_key:
+        st.session_state.pop("debug_run", None)
         st.error("서비스키가 필요합니다. 환경변수, .env, 또는 사이드바 입력을 확인하세요.")
         return
 
     client = AirKoreaClient(
-        normalize_service_key(service_key),
+        normalized_key,
         timeout=timeout,
         retries=0,
     )
     st.session_state.debug_run = run_debug_method(client, selected_function, input_data)
 
 
-def _input_parameter_panel(
+def _raw_response_tab(
     selected_function: str,
+    selected_catalog: list[dict[str, Any]],
     catalog_rows: list[dict[str, Any]],
-) -> dict[str, Any]:
-    st.subheader("Input parameters")
+    service_key: str | None,
+    timeout: float,
+) -> None:
+    st.subheader(_selected_dataset_name(selected_function, selected_catalog))
+    st.caption(_api_full_name(selected_function, selected_catalog))
+
+    try:
+        submitted, input_data, missing = _request_form(selected_function, catalog_rows)
+    except ValueError as exc:
+        st.error(str(exc))
+        return
 
     if selected_function == "call":
-        form_input = _call_input_form(catalog_rows)
-    else:
-        specs = _parameter_specs(selected_function)
-        required_specs = [spec for spec in specs if spec.get("required")]
-        optional_specs = [spec for spec in specs if not spec.get("required")]
-        form_input = {}
+        _service_key_links(_call_catalog_for_input(input_data, catalog_rows))
 
-        if required_specs:
-            st.markdown("**필수 파라미터**")
-            form_input.update(_render_specs(selected_function, required_specs, optional=False))
+    st.subheader("Request params preview")
+    st.json(input_data)
+
+    if submitted:
+        if missing:
+            st.error("필수 파라미터를 입력하세요: " + ", ".join(missing))
         else:
-            st.info("이 API는 라이브러리 호출 기준의 필수 파라미터가 없습니다.")
+            _run(selected_function, input_data, service_key, timeout)
 
-        with st.expander("옵션 파라미터", expanded=True):
-            form_input.update(_render_specs(selected_function, optional_specs, optional=True))
+    debug_run = _current_debug_run(selected_function)
+    if debug_run is None:
+        st.info("Run selected API를 누르면 raw response를 확인합니다.")
+        return
 
-    st.markdown("**Raw JSON kwargs**")
-    generated_json = json.dumps(form_input, ensure_ascii=False, indent=2)
-    use_raw_json = st.checkbox("Raw JSON 직접 편집 사용", value=False)
-    if not use_raw_json:
-        st.code(generated_json, language="json")
-        return form_input
+    if debug_run.error:
+        st.error(debug_run.error.get("message") or "API 실행 중 오류가 발생했습니다.")
+    st.json(debug_run.response)
 
-    raw_json = st.text_area(
-        "Generated JSON kwargs",
-        value=generated_json,
-        height=180,
-        key=f"raw_json_{selected_function}",
-    )
+
+def _request_form(
+    selected_function: str,
+    catalog_rows: list[dict[str, Any]],
+) -> tuple[bool, dict[str, Any], list[str]]:
+    key_prefix = f"request:{selected_function}"
+
+    with st.form(f"request-form:{selected_function}"):
+        if selected_function == "call":
+            st.subheader("Required parameters")
+            required_specs: list[dict[str, Any]] = []
+            form_input = _call_input_form(catalog_rows)
+        else:
+            specs = _parameter_specs(selected_function)
+            required_specs = [spec for spec in specs if spec.get("required")]
+            optional_specs = [spec for spec in specs if not spec.get("required")]
+            form_input = {}
+
+            st.subheader("Required parameters")
+            if required_specs:
+                form_input.update(_render_specs(selected_function, required_specs))
+            else:
+                st.caption("이 API는 라이브러리 호출 기준의 필수 파라미터가 없습니다.")
+
+            st.subheader("Optional parameters")
+            form_input.update(_render_specs(selected_function, optional_specs))
+
+        extra_text = st.text_area(
+            "Extra kwargs JSON",
+            value="{}",
+            height=110,
+            help="폼에 없는 라이브러리 kwargs를 JSON object로 추가하거나 같은 key를 덮어씁니다.",
+            key=f"{key_prefix}:extra",
+        )
+        submitted = st.form_submit_button("Run selected API")
+
+    extra_params = _parse_extra_params(extra_text)
+    input_data = {**form_input, **extra_params}
+    missing = [
+        spec["name"]
+        for spec in required_specs
+        if not str(input_data.get(spec["name"], "")).strip()
+    ]
+    return submitted, input_data, missing
+
+
+def _parse_extra_params(text: str) -> dict[str, Any]:
+    if not text.strip():
+        return {}
     try:
-        raw_input = json.loads(raw_json or "{}")
+        parsed = json.loads(text)
     except json.JSONDecodeError as exc:
-        st.error(f"Raw JSON 오류: {exc}")
-        return form_input
-    if not isinstance(raw_input, dict):
-        st.error("Raw JSON은 object여야 합니다.")
-        return form_input
-    return raw_input
+        raise ValueError(f"Extra kwargs JSON 오류: {exc}") from exc
+    if not isinstance(parsed, dict):
+        raise ValueError("Extra kwargs JSON은 object여야 합니다.")
+    return parsed
 
 
-def _fixture_tab(debug_run: Any) -> None:
+def _current_debug_run(selected_function: str) -> Any | None:
+    debug_run = st.session_state.get("debug_run")
+    if debug_run is None:
+        return None
+    if getattr(debug_run, "function", None) != selected_function:
+        return None
+    return debug_run
+
+
+def _fixture_tab(debug_run: Any, fixture_base_dir: str) -> None:
     if debug_run is None:
         st.info("실행 후 fixture로 저장할 수 있습니다.")
+        st.caption("Fixture base dir")
+        st.code(fixture_base_dir, language=None)
         return
 
     with st.form("fixture_form"):
@@ -200,7 +265,7 @@ def _fixture_tab(debug_run: Any) -> None:
             value="fetched_at, request_id, updated_at, collected_at",
         )
         required_fields = st.text_input("Required fields", value="")
-        base_dir = st.text_input("Fixture base dir", value=str(ROOT / "tests" / "fixtures"))
+        base_dir = st.text_input("Fixture base dir", value=fixture_base_dir)
         overwrite = st.checkbox("Overwrite existing fixture", value=False)
         submitted = st.form_submit_button("Save as fixture")
 
@@ -228,11 +293,77 @@ def _fixture_tab(debug_run: Any) -> None:
         st.success(f"Saved: {path}")
 
 
+def _pydantic_model_tab(selected_function: str) -> None:
+    debug_run = _current_debug_run(selected_function)
+    if debug_run is None:
+        st.info("Raw Response 탭에서 선택한 API를 실행하면 여기에서 Pydantic 모델을 확인합니다.")
+        return
+    if debug_run.error:
+        st.warning("API 실행 중 오류가 있어 parsed model이 비어 있을 수 있습니다.")
+    st.json(jsonable(debug_run.parsed) if debug_run.parsed is not None else {})
+
+
+def _processed_result_tab(selected_function: str) -> None:
+    debug_run = _current_debug_run(selected_function)
+    if debug_run is None:
+        st.info("Raw Response 탭에서 API를 실행하면 처리된 row preview를 표시합니다.")
+        return
+
+    processed = jsonable(debug_run.processed)
+    rows = _table_rows(processed)
+    if rows:
+        st.dataframe(rows, width="stretch", hide_index=True)
+    else:
+        st.json(processed if processed is not None else {})
+
+
+def _validation_errors_tab(selected_function: str) -> None:
+    debug_run = _current_debug_run(selected_function)
+    if debug_run is None:
+        st.info("아직 실행된 API가 없습니다.")
+        return
+    if debug_run.error:
+        st.json(debug_run.error)
+        return
+    st.success("오류 없이 실행됐습니다.")
+
+
+def _debug_trace_tab(
+    catalog_rows: list[dict[str, Any]],
+    selected_function: str,
+    selected_catalog: list[dict[str, Any]],
+) -> None:
+    debug_run = _current_debug_run(selected_function)
+
+    st.subheader("Catalog")
+    st.dataframe(catalog_rows, width="stretch", hide_index=True)
+
+    st.subheader("Selected API")
+    if selected_function == "call":
+        selected_rows = list(debug_run.catalog) if debug_run and debug_run.catalog else []
+        if selected_rows:
+            st.json(selected_rows[0] if len(selected_rows) == 1 else selected_rows)
+            _service_key_links(selected_rows)
+        else:
+            st.info(
+                "Raw Response 탭에서 service와 endpoint를 선택해 실행하면 "
+                "선택 API를 표시합니다."
+            )
+    else:
+        st.json(selected_catalog[0] if len(selected_catalog) == 1 else selected_catalog)
+        _service_key_links(selected_catalog)
+    st.caption("credential env: AIRKOREA_SERVICE_KEY")
+
+    st.subheader("Trace")
+    if debug_run:
+        st.code("\n".join(debug_run.trace) or "trace 없음")
+    else:
+        st.info("아직 실행 trace가 없습니다.")
+
+
 def _render_specs(
     method_name: str,
     specs: list[dict[str, Any]],
-    *,
-    optional: bool,
 ) -> dict[str, Any]:
     values: dict[str, Any] = {}
     if not specs:
@@ -242,15 +373,8 @@ def _render_specs(
     columns = st.columns(2)
     for index, spec in enumerate(specs):
         with columns[index % 2]:
-            include = True
-            if optional:
-                include = st.checkbox(
-                    f"{spec['label']} 사용",
-                    value=bool(spec.get("include_by_default")),
-                    key=f"include_{method_name}_{spec['name']}",
-                )
-            value = _param_widget(method_name, spec, disabled=optional and not include)
-            if include and value is not None and value != "":
+            value = _param_widget(method_name, spec)
+            if value is not None and value != "":
                 values[spec["name"]] = value
     return values
 
@@ -258,8 +382,6 @@ def _render_specs(
 def _param_widget(
     method_name: str,
     spec: dict[str, Any],
-    *,
-    disabled: bool,
 ) -> Any:
     key = f"param_{method_name}_{spec['name']}"
     label = spec["label"]
@@ -276,7 +398,6 @@ def _param_widget(
             index=index,
             key=key,
             help=help_text,
-            disabled=disabled,
         )
         return None if value == "" else value
 
@@ -289,7 +410,6 @@ def _param_widget(
                 step=1,
                 key=key,
                 help=help_text,
-                disabled=disabled,
             )
         )
 
@@ -300,7 +420,6 @@ def _param_widget(
                 value=float(default if default is not None else 0.0),
                 key=key,
                 help=help_text,
-                disabled=disabled,
             )
         )
 
@@ -310,9 +429,8 @@ def _param_widget(
             value=json.dumps(default or {}, ensure_ascii=False, indent=2),
             key=key,
             help=help_text,
-            disabled=disabled,
         )
-        if disabled or not text.strip():
+        if not text.strip():
             return None
         try:
             return json.loads(text)
@@ -325,12 +443,10 @@ def _param_widget(
         value=str(default or ""),
         key=key,
         help=help_text,
-        disabled=disabled,
     ).strip()
 
 
 def _call_input_form(catalog_rows: list[dict[str, Any]]) -> dict[str, Any]:
-    st.markdown("**필수 파라미터**")
     service_names = sorted({row["service_name"] for row in catalog_rows})
     service_name = st.selectbox(
         "Service name",
@@ -348,60 +464,154 @@ def _call_input_form(catalog_rows: list[dict[str, Any]]) -> dict[str, Any]:
     )
     selected_row = next(row for row in endpoint_rows if row["endpoint"] == endpoint)
     st.caption(f"데이터셋: {selected_row['dataset_name']}")
-    _service_key_links([selected_row])
 
-    with st.expander("옵션 파라미터", expanded=True):
-        params_text = st.text_area(
-            "params",
-            value=json.dumps(_default_call_params(endpoint), ensure_ascii=False, indent=2),
-            key="param_call_params",
-            help="endpoint별 query parameter object",
-        )
-        params: dict[str, Any] = {}
-        if params_text.strip():
-            try:
-                parsed = json.loads(params_text)
-            except json.JSONDecodeError as exc:
-                st.error(f"params JSON 오류: {exc}")
+    st.subheader("Optional parameters")
+    params_text = st.text_area(
+        "params",
+        value=json.dumps(_default_call_params(endpoint), ensure_ascii=False, indent=2),
+        key="param_call_params",
+        help="endpoint별 query parameter object",
+    )
+    params: dict[str, Any] = {}
+    if params_text.strip():
+        try:
+            parsed = json.loads(params_text)
+        except json.JSONDecodeError as exc:
+            st.error(f"params JSON 오류: {exc}")
+        else:
+            if isinstance(parsed, dict):
+                params = parsed
             else:
-                if isinstance(parsed, dict):
-                    params = parsed
-                else:
-                    st.error("params는 JSON object여야 합니다.")
+                st.error("params는 JSON object여야 합니다.")
 
-        include_page_no = st.checkbox("page_no 사용", value=False, key="include_call_page_no")
+    col1, col2 = st.columns(2)
+    with col1:
         page_no = st.number_input(
             "page_no",
             min_value=1,
             value=1,
             step=1,
             key="param_call_page_no",
-            disabled=not include_page_no,
         )
-        include_num = st.checkbox(
-            "num_of_rows 사용",
-            value=True,
-            key="include_call_num_of_rows",
-        )
+    with col2:
         num_of_rows = st.number_input(
             "num_of_rows",
             min_value=1,
             value=5,
             step=1,
             key="param_call_num_of_rows",
-            disabled=not include_num,
         )
 
-    result: dict[str, Any] = {
+    return {
         "service_name": service_name,
         "endpoint": endpoint,
         "params": params,
+        "page_no": int(page_no),
+        "num_of_rows": int(num_of_rows),
     }
-    if include_page_no:
-        result["page_no"] = int(page_no)
-    if include_num:
-        result["num_of_rows"] = int(num_of_rows)
-    return result
+
+
+def _table_rows(value: Any) -> list[dict[str, Any]]:
+    if isinstance(value, list) and all(isinstance(item, dict) for item in value):
+        return value
+    if isinstance(value, dict):
+        items = value.get("items")
+        if isinstance(items, list) and all(isinstance(item, dict) for item in items):
+            return items
+        raw_items = value.get("raw", {}).get("body", {}).get("items")
+        if isinstance(raw_items, list) and all(isinstance(item, dict) for item in raw_items):
+            return raw_items
+    return []
+
+
+def _fixture_base_dir_sidebar() -> str:
+    st.subheader("Fixtures")
+    candidates = _fixture_dir_candidates()
+    options = [str(path) for path in candidates]
+    custom_label = "Custom..."
+    selected = st.selectbox("Fixture base dir", [*options, custom_label])
+    if selected == custom_label:
+        selected = st.text_input(
+            "Custom fixture base dir",
+            value=str((ROOT / "tests" / "fixtures").resolve()),
+        )
+    st.caption(selected)
+    return selected
+
+
+def _fixture_dir_candidates() -> list[Path]:
+    preferred = [
+        ROOT / "tests" / "fixtures",
+        ROOT / "tests",
+        ROOT / "debug_ui",
+        ROOT,
+    ]
+    candidates: list[Path] = []
+    for path in preferred:
+        resolved = path.resolve()
+        if resolved not in candidates:
+            candidates.append(resolved)
+    return candidates
+
+
+def _selected_dataset_name(
+    selected_function: str,
+    selected_catalog: list[dict[str, Any]],
+) -> str:
+    if selected_function == "call":
+        return "AirKorea raw call"
+    dataset_names = sorted(
+        {
+            str(row["dataset_name"])
+            for row in selected_catalog
+            if row.get("dataset_name")
+        }
+    )
+    if len(dataset_names) == 1:
+        return dataset_names[0]
+    if dataset_names:
+        return f"{selected_function} ({len(dataset_names)} datasets)"
+    return selected_function
+
+
+def _api_full_name(selected_function: str, catalog_rows: list[dict[str, Any]]) -> str:
+    if selected_function == "call":
+        return "AirKoreaClient.call"
+    if not catalog_rows:
+        return selected_function
+    return "\n".join(
+        f"{row['dataset_name']} / {row['service_name']} / {row['endpoint']}"
+        for row in catalog_rows
+    )
+
+
+def _api_description(selected_function: str, catalog_rows: list[dict[str, Any]]) -> str:
+    if selected_function == "call":
+        return "service_name과 endpoint를 직접 선택해 AirKorea endpoint를 호출합니다."
+    if len(catalog_rows) > 1:
+        return (
+            f"{selected_function} 함수는 {len(catalog_rows)}개 AirKorea endpoint를 "
+            "조합해 호출합니다."
+        )
+    if catalog_rows:
+        row = catalog_rows[0]
+        return f"{row['dataset_name']}의 {row['endpoint']} endpoint입니다."
+    return f"{selected_function} API입니다."
+
+
+def _call_catalog_for_input(
+    input_data: dict[str, Any],
+    catalog_rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    service_name = input_data.get("service_name")
+    endpoint = input_data.get("endpoint")
+    if not isinstance(service_name, str) or not isinstance(endpoint, str):
+        return []
+    return [
+        row
+        for row in catalog_rows
+        if row["service_name"] == service_name and row["endpoint"] == endpoint
+    ]
 
 
 def _method_options(catalog_rows: list[dict[str, Any]]) -> list[str]:

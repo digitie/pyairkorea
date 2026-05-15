@@ -79,7 +79,7 @@ def test_load_service_key_reads_local_dotenv_when_environment_missing(
     monkeypatch.delenv("AIRKOREA_SERVICE_KEY", raising=False)
     monkeypatch.chdir(tmp_path)
     (tmp_path / ".env").write_text(
-        "OTHER=value\nexport AIRKOREA_SERVICE_KEY=' local key '\n",
+        "\ufeffOTHER=value\nexport AIRKOREA_SERVICE_KEY=' local key '\n",
         encoding="utf-8",
     )
 
