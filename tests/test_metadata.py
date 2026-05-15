@@ -4,8 +4,11 @@ from datetime import datetime, timezone
 
 from airkorea.metadata import (
     is_credential_param,
+    load_env_value,
+    load_service_key,
     make_cache_key,
     make_call_context,
+    normalize_service_key,
     sanitize_request_params,
 )
 
@@ -56,3 +59,30 @@ def test_make_cache_key_is_stable_and_ignores_credentials() -> None:
 
     assert first == second
     assert first.startswith("airkorea:v1:")
+
+
+def test_load_service_key_prefers_environment_and_strips_whitespace(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    dotenv = tmp_path / ".env"
+    dotenv.write_text('AIRKOREA_SERVICE_KEY=" file-key "\n', encoding="utf-8")
+    monkeypatch.setenv("AIRKOREA_SERVICE_KEY", " env-\nkey ")
+
+    assert load_service_key(dotenv_path=dotenv) == "env-key"
+
+
+def test_load_service_key_reads_local_dotenv_when_environment_missing(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    monkeypatch.delenv("AIRKOREA_SERVICE_KEY", raising=False)
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / ".env").write_text(
+        "OTHER=value\nexport AIRKOREA_SERVICE_KEY=' local key '\n",
+        encoding="utf-8",
+    )
+
+    assert load_env_value("AIRKOREA_SERVICE_KEY") == " local key "
+    assert load_service_key() == "localkey"
+    assert normalize_service_key(" key\r\nwith spaces\t") == "keywithspaces"

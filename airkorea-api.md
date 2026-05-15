@@ -46,6 +46,21 @@
 
 코드에는 같은 내용이 `airkorea.client.SUPPORTED_ENDPOINTS`로 고정되어 있습니다. 목록을 추가하거나 수정하면 테스트도 함께 수정해야 합니다.
 
+## 코드 카탈로그
+
+외부 UI나 디버그 도구에서 API 목록을 보여줄 때는 `airkorea.api_catalog()` 또는 `airkorea.api_catalog_dicts()`를 사용합니다. 카탈로그는 `SUPPORTED_ENDPOINTS`와 같은 endpoint 집합을 대상으로 하며, 각 항목은 다음 정보를 포함합니다.
+
+- `dataset_name`: 공공데이터포털 데이터셋명
+- `service_label`: 짧은 서비스군 이름
+- `service_name`: AirKorea 서비스명
+- `endpoint`: 공식 endpoint 철자
+- `method_names`: 연결된 Python public method
+- `service_key_param`: `serviceKey` 또는 `ServiceKey`
+- `service_key_url`: 서비스키 신청/발급에 사용할 공공데이터포털 링크
+- `portal_url`: 데이터셋 상세 링크
+
+Streamlit 디버그 UI는 API 선택 후 `service_key_url`을 링크로 보여주면 됩니다. `run_debug_method()`가 반환하는 `DebugRun.catalog`에도 선택된 함수와 연결된 카탈로그 항목이 들어갑니다.
+
 ## 공통 호출 규칙
 
 대부분의 서비스는 다음 공통 파라미터를 사용합니다.

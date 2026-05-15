@@ -34,7 +34,7 @@ from airkorea.codes import (
 )
 from airkorea.coords import LatLon, TmPoint, resolve_airkorea_tm
 from airkorea.exceptions import AirKoreaParseError
-from airkorea.metadata import is_credential_param, make_call_context
+from airkorea.metadata import is_credential_param, load_service_key, make_call_context
 from airkorea.models import (
     AdvisoryOccurrence,
     AirKoreaPage,
@@ -164,11 +164,16 @@ class AirKoreaClient:
         self.english_station_base_url = english_station_base_url
 
     @classmethod
-    def from_env(cls, name: str = "AIRKOREA_SERVICE_KEY", **kwargs: Any) -> AirKoreaClient:
-        try:
-            service_key = os.environ[name]
-        except KeyError as exc:
-            raise ValueError(f"{name} is not set") from exc
+    def from_env(
+        cls,
+        name: str = "AIRKOREA_SERVICE_KEY",
+        *,
+        dotenv_path: str | os.PathLike[str] | None = ".env",
+        **kwargs: Any,
+    ) -> AirKoreaClient:
+        service_key = load_service_key(name, dotenv_path=dotenv_path)
+        if service_key is None:
+            raise ValueError(f"{name} is not set")
         return cls(service_key=service_key, **kwargs)
 
     def station_measurements(

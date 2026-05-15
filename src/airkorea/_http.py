@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 from time import sleep
 from typing import Any, Protocol, cast
 
@@ -17,6 +18,7 @@ from airkorea.exceptions import (
     AirKoreaRequestError,
     AirKoreaServerError,
 )
+from airkorea.metadata import normalize_service_key, sanitize_request_params
 
 
 class ResponseLike(Protocol):
@@ -33,6 +35,20 @@ class SessionLike(Protocol):
 TRANSIENT_STATUSES = {500, 502, 503, 504}
 
 
+@dataclass(frozen=True)
+class HttpExchange:
+    """디버그 fixture 저장을 위해 인증키를 제거해 보관한 HTTP 교환 기록."""
+
+    method: str
+    url: str
+    request_params: Mapping[str, Any]
+    status_code: int
+    response_headers: Mapping[str, str]
+    response_body: Mapping[str, Any] | None = None
+    response_json: Mapping[str, Any] | None = None
+    response_text: str = ""
+
+
 class HttpClient:
     """AirKorea 서비스군이 공유하는 작은 요청 래퍼."""
 
@@ -45,13 +61,32 @@ class HttpClient:
         retries: int = 3,
         retry_backoff: float = 0.3,
     ) -> None:
-        if not service_key:
+        normalized_service_key = normalize_service_key(service_key)
+        if not normalized_service_key:
             raise AirKoreaAuthError("service_key is required")
-        self._service_key = service_key
+        self._service_key = normalized_service_key
         self._session = cast(SessionLike, session or requests.Session())
         self._timeout = timeout
         self._retries = max(0, retries)
         self._retry_backoff = max(0.0, retry_backoff)
+        self._exchanges: list[HttpExchange] = []
+
+    @property
+    def exchanges(self) -> tuple[HttpExchange, ...]:
+        """현재 클라이언트가 기록한 인증키 제거 HTTP 교환 목록입니다."""
+
+        return tuple(self._exchanges)
+
+    @property
+    def last_exchange(self) -> HttpExchange | None:
+        """마지막 HTTP 교환 기록을 반환하고, 호출 전이면 ``None``을 반환합니다."""
+
+        return self._exchanges[-1] if self._exchanges else None
+
+    def clear_exchanges(self) -> None:
+        """디버그 실행 단위를 나누기 위해 누적 HTTP 교환 기록을 비웁니다."""
+
+        self._exchanges.clear()
 
     def get_body(
         self,
@@ -63,24 +98,56 @@ class HttpClient:
         format_param: str = "returnType",
         format_value: str = "json",
     ) -> Mapping[str, Any]:
+        url = f"{base_url.rstrip('/')}/{endpoint.lstrip('/')}"
+        request_params = self._params(
+            params,
+            service_key_param=service_key_param,
+            format_param=format_param,
+            format_value=format_value,
+        )
         response = self._request(
-            f"{base_url.rstrip('/')}/{endpoint.lstrip('/')}",
-            self._params(
-                params,
-                service_key_param=service_key_param,
-                format_param=format_param,
-                format_value=format_value,
-            ),
+            url,
+            request_params,
         )
         try:
             payload = response.json()
         except ValueError as exc:
+            self._record_exchange(
+                url=url,
+                request_params=request_params,
+                response=response,
+                response_text=response.text[:300],
+            )
             _raise_for_plain_text(response.text)
             raise AirKoreaParseError(f"failed to parse JSON response: {exc}") from exc
 
         if not isinstance(payload, Mapping):
+            self._record_exchange(
+                url=url,
+                request_params=request_params,
+                response=response,
+            )
             raise AirKoreaParseError("JSON response root is not an object")
-        return _extract_body(payload)
+
+        try:
+            body = _extract_body(payload)
+        except Exception:
+            self._record_exchange(
+                url=url,
+                request_params=request_params,
+                response=response,
+                response_json=payload,
+            )
+            raise
+
+        self._record_exchange(
+            url=url,
+            request_params=request_params,
+            response=response,
+            response_body=body,
+            response_json=payload,
+        )
+        return body
 
     def _request(self, url: str, params: Mapping[str, Any]) -> ResponseLike:
         last_error: requests.RequestException | None = None
@@ -123,6 +190,36 @@ class HttpClient:
         if self._retry_backoff <= 0:
             return
         sleep(self._retry_backoff * (2**attempt))
+
+    def _record_exchange(
+        self,
+        *,
+        url: str,
+        request_params: Mapping[str, Any],
+        response: ResponseLike,
+        response_body: Mapping[str, Any] | None = None,
+        response_json: Mapping[str, Any] | None = None,
+        response_text: str = "",
+    ) -> None:
+        self._exchanges.append(
+            HttpExchange(
+                method="GET",
+                url=url,
+                request_params=sanitize_request_params(request_params),
+                status_code=response.status_code,
+                response_headers=_response_headers(response),
+                response_body=response_body,
+                response_json=response_json,
+                response_text=response_text,
+            )
+        )
+
+
+def _response_headers(response: ResponseLike) -> dict[str, str]:
+    headers = getattr(response, "headers", {})
+    if not isinstance(headers, Mapping):
+        return {}
+    return {str(key): str(value) for key, value in headers.items()}
 
 
 def _raise_for_status(response: ResponseLike) -> None:

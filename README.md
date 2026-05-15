@@ -32,6 +32,14 @@ PowerShell:
 $env:AIRKOREA_SERVICE_KEY="발급받은_인증키"
 ```
 
+환경변수가 없으면 `AirKoreaClient.from_env()`는 현재 작업 디렉터리의 `.env`에서 같은 이름을 찾습니다.
+
+```dotenv
+AIRKOREA_SERVICE_KEY=발급받은_인증키
+```
+
+포털에서 키를 복사하면서 앞뒤 공백, 줄바꿈, 탭이 섞여도 클라이언트 생성 시 제거합니다.
+
 ## 빠른 사용
 
 ```python
@@ -122,6 +130,49 @@ safe_params = sanitize_request_params({"serviceKey": "secret", "addr": "서울"}
 cache_key = make_cache_key("getMsrstnList", safe_params, service_name="MsrstnInfoInqireSvc")
 ```
 
+## API 카탈로그
+
+지원 API 목록은 코드에서 조회할 수 있습니다. 각 항목에는 사람이 읽기 쉬운 데이터셋명, endpoint, Python 메서드, 서비스키 신청 링크가 들어갑니다.
+
+```python
+from airkorea import api_catalog_dicts
+
+for row in api_catalog_dicts():
+    print(row["dataset_name"], row["endpoint"], row["service_key_url"])
+```
+
+## 디버그 fixture
+
+Streamlit 같은 외부 Web UI에서 입력값을 바꿔가며 실행한 결과를 pytest replay fixture로 저장할 수 있도록 `run_debug_method()`와 `save_debug_fixture()`를 제공합니다. 라이브러리 본체는 Streamlit에 의존하지 않습니다.
+
+```python
+from airkorea import AirKoreaClient, run_debug_method, save_debug_fixture
+
+air = AirKoreaClient.from_env()
+debug_run = run_debug_method(
+    air,
+    "station_measurements",
+    {"station_name": "종로구", "num_of_rows": 1},
+)
+
+save_debug_fixture(
+    base_dir="tests/fixtures",
+    case_name="jongno_normal",
+    description="종로구 측정소 실시간 정상 응답",
+    debug_run=debug_run,
+    library_version="0.4.0",
+)
+```
+
+Streamlit의 Debug Trace 탭에서는 `debug_run.catalog`를 표나 JSON으로 표시하면 선택한 API의 데이터셋명과 서비스키 링크를 같이 보여줄 수 있습니다.
+
+```python
+st.dataframe(debug_run.catalog)
+st.code("\n".join(debug_run.trace))
+```
+
+fixture 저장 전 인증키성 값은 제거되거나 `<REDACTED>`로 치환됩니다. 저장된 fixture는 `tests/test_generated_fixtures.py`의 공통 runner가 실제 네트워크 없이 replay합니다. 자세한 구조는 [docs/debug-fixtures.md](docs/debug-fixtures.md)를 확인하세요.
+
 자세한 라이브러리 사용 지침은 [docs/library-surface.md](docs/library-surface.md)를 확인하세요.
 
 ## 지원 API
@@ -170,6 +221,7 @@ python -m mypy src/airkorea
 
 - [airkorea-api.md](airkorea-api.md): 공식 API 목록, endpoint, 메서드 매핑
 - [docs/library-surface.md](docs/library-surface.md): 외부 프로그램 연동용 타입/좌표 지침
+- [docs/debug-fixtures.md](docs/debug-fixtures.md): 디버그 UI fixture 저장과 replay 테스트 구조
 - [docs/implementation-status.md](docs/implementation-status.md): 구현/테스트 현황
 - [docs/documentation-style.md](docs/documentation-style.md): 문서와 Python 내부 문서 작성 규칙
 - [docs/testing.md](docs/testing.md): 테스트 원칙

@@ -136,6 +136,87 @@ safe_params = sanitize_request_params({"serviceKey": "secret", "addr": "서울"}
 cache_key = make_cache_key("getMsrstnList", safe_params, service_name="MsrstnInfoInqireSvc")
 ```
 
+## 서비스키 로딩
+
+`AirKoreaClient.from_env()`는 기본적으로 `AIRKOREA_SERVICE_KEY` 환경변수를 읽고, 값이 없으면 현재 작업 디렉터리의 `.env` 파일에서 같은 이름을 찾습니다. 외부 UI에서 `.env` 경로를 직접 지정할 수도 있습니다.
+
+```python
+from airkorea import AirKoreaClient
+
+air = AirKoreaClient.from_env()
+air_from_file = AirKoreaClient.from_env(dotenv_path="local.env")
+```
+
+서비스키는 클라이언트 내부에서 `normalize_service_key()`를 거치므로, 복사/붙여넣기 중 섞인 앞뒤 공백, 줄바꿈, 탭은 제거됩니다.
+
+## API 카탈로그
+
+`api_catalog()`는 지원 endpoint 전체를 사람이 읽기 쉬운 데이터셋명과 함께 반환합니다. Streamlit에서는 `api_catalog_dicts()`를 `st.dataframe()`에 바로 넘길 수 있습니다.
+
+```python
+from airkorea import api_catalog_dicts, api_catalog_for_method
+
+rows = api_catalog_dicts()
+selected = api_catalog_for_method("station_measurements")
+```
+
+카탈로그 항목 주요 필드:
+
+- `dataset_name`: 공공데이터포털 데이터셋명
+- `service_label`: 짧은 서비스군 이름
+- `service_name`: AirKorea 서비스명
+- `endpoint`: 공식 endpoint 철자
+- `method_names`: 연결된 Python public method 이름 목록
+- `service_key_param`: `serviceKey` 또는 `ServiceKey`
+- `service_key_url`: 서비스키 신청/발급에 사용할 공공데이터포털 링크
+- `portal_url`: 데이터셋 상세 링크
+
+## 디버그 fixture helper
+
+외부 디버그 Web UI나 수동 조사 스크립트는 `run_debug_method()`로 public method 실행 결과를 `DebugRun`으로 받을 수 있습니다. `DebugRun`에는 입력, 인증키 제거 요청, raw response body, typed 결과, trace, error가 들어갑니다.
+
+```python
+from airkorea import AirKoreaClient, run_debug_method, save_debug_fixture
+
+air = AirKoreaClient.from_env()
+debug_run = run_debug_method(
+    air,
+    "station_measurements",
+    {"station_name": "종로구", "num_of_rows": 1},
+)
+
+save_debug_fixture(
+    base_dir="tests/fixtures",
+    case_name="jongno_normal",
+    debug_run=debug_run,
+)
+```
+
+`DebugRun.catalog`는 선택된 함수와 연결된 카탈로그 dict 목록입니다. Streamlit의 Debug Trace 탭에서는 다음처럼 실제 데이터셋명과 서비스키 링크를 표시할 수 있습니다.
+
+```python
+st.dataframe(debug_run.catalog)
+st.code("\n".join(debug_run.trace))
+```
+
+관련 public helper:
+
+- `ApiCatalogEntry`
+- `DebugRun`
+- `api_catalog()`
+- `api_catalog_dicts()`
+- `api_catalog_for_method(method_name)`
+- `api_catalog_for_debug_input(function_name, input_data)`
+- `get_api_catalog_entry(service_name, endpoint)`
+- `run_debug_method(client, function_name, input_data)`
+- `save_debug_fixture(...)`
+- `load_debug_fixture(path)`
+- `jsonable(value)`
+- `redact_sensitive(value)`
+- `slugify(value)`
+
+fixture 형식과 replay runner 구조는 `docs/debug-fixtures.md`를 따릅니다.
+
 ## 정규화 helper
 
 외부 프로그램에서 사용자 입력을 먼저 검증하고 싶다면 helper를 직접 사용할 수 있습니다.

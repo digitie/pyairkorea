@@ -20,8 +20,21 @@ python -m mypy src/airkorea
 - 숫자 문자열, 날짜 문자열, KST 시각 문자열을 타입으로 변환한다.
 - 신규 API는 확인된 필드만 파싱하고 `raw` 보존을 전제로 한다.
 - 서비스 목록은 `SUPPORTED_ENDPOINTS`와 `tests/test_expanded_api.py`가 서로 맞아야 한다.
+- API 카탈로그는 `SUPPORTED_ENDPOINTS` 전체를 덮어야 하며 데이터셋명과 서비스키 링크를 포함해야 한다.
 - raw `call()`/`iter_pages()`는 인증키성 params를 실제 요청과 context에서 제거하고, `pageNo` 순회를 fixture로 검증한다.
 - public API를 새로 추가하면 `tests/test_public_api.py`의 권장 export 목록도 함께 갱신한다.
+
+## 디버그 fixture replay
+
+디버그 Web UI나 수동 조사 중 저장한 JSON fixture는 `tests/fixtures/{function}/{case}.json`에 둡니다. `tests/test_generated_fixtures.py`는 이 파일들을 자동으로 읽고, `tests/runners.py`의 공통 runner가 저장된 `response.body`를 `FakeSession`에 넣어 public method를 다시 실행합니다.
+
+- fixture는 실제 AirKorea 네트워크를 호출하지 않는다.
+- 테스트 코드를 케이스마다 생성하지 않는다.
+- fixture 저장 전 `serviceKey`, `ServiceKey`, `Authorization`, `x-api-key`, token류 값은 제거하거나 `<REDACTED>`로 치환한다.
+- 기본 assertion mode는 `snapshot`이며, 변동 필드는 `assertion.exclude_fields`로 제외한다.
+- `schema_only`, `required_fields`, `count`는 좁은 회귀 검증이 필요할 때 사용한다.
+
+fixture 형식과 Web UI 연동 방식은 `docs/debug-fixtures.md`에 정리합니다.
 
 ## Live API 테스트 기준
 

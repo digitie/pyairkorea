@@ -2,6 +2,14 @@
 
 from kraddr.base import PlaceCoordinate
 
+from airkorea.catalog import (
+    ApiCatalogEntry,
+    api_catalog,
+    api_catalog_dicts,
+    api_catalog_for_debug_input,
+    api_catalog_for_method,
+    get_api_catalog_entry,
+)
 from airkorea.client import SUPPORTED_ENDPOINTS, AirKoreaClient
 from airkorea.codes import (
     AirQualityGrade,
@@ -23,6 +31,17 @@ from airkorea.coords import (
     tm_to_wgs84,
     wgs84_to_tm,
 )
+from airkorea.debug import (
+    DEBUGGABLE_METHODS,
+    DEFAULT_ASSERTION,
+    DebugRun,
+    jsonable,
+    load_debug_fixture,
+    redact_sensitive,
+    run_debug_method,
+    save_debug_fixture,
+    slugify,
+)
 from airkorea.exceptions import (
     AirKoreaAuthError,
     AirKoreaError,
@@ -35,8 +54,11 @@ from airkorea.exceptions import (
 )
 from airkorea.metadata import (
     is_credential_param,
+    load_env_value,
+    load_service_key,
     make_cache_key,
     make_call_context,
+    normalize_service_key,
     sanitize_request_params,
 )
 from airkorea.models import (
@@ -80,10 +102,14 @@ __all__ = [
     "AirQualityGrade",
     "AirQualityMeasurement",
     "AirQualityStat",
+    "ApiCatalogEntry",
     "AdvisoryOccurrence",
     "BackgroundConcentration",
     "CaiMeasurement",
     "DataTerm",
+    "DEBUGGABLE_METHODS",
+    "DEFAULT_ASSERTION",
+    "DebugRun",
     "DustAlarm",
     "EnglishAirQualityMeasurement",
     "EnglishStation",
@@ -107,16 +133,30 @@ __all__ = [
     "TrafficStat",
     "WeeklyForecastNotice",
     "__version__",
+    "api_catalog",
+    "api_catalog_dicts",
+    "api_catalog_for_debug_input",
+    "api_catalog_for_method",
     "coerce_latlon",
     "coerce_tm_point",
+    "get_api_catalog_entry",
     "has_next_page",
     "is_credential_param",
     "iter_paginated_pages",
+    "jsonable",
+    "load_debug_fixture",
+    "load_env_value",
+    "load_service_key",
     "make_cache_key",
     "make_call_context",
     "next_page_no",
+    "normalize_service_key",
+    "redact_sensitive",
     "resolve_airkorea_tm",
+    "run_debug_method",
+    "save_debug_fixture",
     "sanitize_request_params",
+    "slugify",
     "tm_to_wgs84",
     "wgs84_to_tm",
 ]

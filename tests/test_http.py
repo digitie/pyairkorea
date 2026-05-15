@@ -34,6 +34,15 @@ def test_request_adds_common_params() -> None:
     assert session.last_call.params["pageNo"] == 1
 
 
+def test_service_key_strips_pasted_whitespace() -> None:
+    session = FakeSession([FakeResponse(json_data=payload([]))])
+    client = HttpClient(" decoded-\nkey\t ", session=session, retries=0)
+
+    client.get_body("https://example.test/base", "endpoint", {})
+
+    assert session.last_call.params["serviceKey"] == "decoded-key"
+
+
 def test_request_can_override_common_param_names() -> None:
     session = FakeSession([FakeResponse(json_data=payload([]))])
     client = HttpClient("decoded-key", session=session, retries=0)

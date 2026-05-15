@@ -40,12 +40,16 @@
 - 응답 모델은 Pydantic v2 `BaseModel` 기반이며 `raw`를 보존하면서 enum/좌표 property를 제공
 - raw escape hatch: `AirKoreaClient.call()`과 `iter_pages()`는 `SUPPORTED_ENDPOINTS` 내 endpoint를 원본 page로 반환
 - provenance/cache helper: `AirKoreaCallContext`, `sanitize_request_params`, `make_cache_key`
+- debug fixture helper: `DebugRun`, `run_debug_method`, `save_debug_fixture`
+- API catalog helper: `ApiCatalogEntry`, `api_catalog`, `api_catalog_dicts`
+- 서비스키 로딩: 환경변수 우선, 기본 `.env` fallback, 복사/붙여넣기 공백 제거
 
 ## 테스트 매트릭스
 
 | 테스트 | 검증 내용 |
 |---|---|
 | `tests/test_client.py` | 기존 대기오염정보/측정소정보/좌표 convenience 메서드 |
+| `tests/test_catalog.py` | API 카탈로그, 데이터셋명, 서비스키 링크 |
 | `tests/test_expanded_api.py` | 누락 서비스군 endpoint, 파라미터, 모델 파싱 |
 | `tests/test_http.py` | HTTP 상태, resultCode, JSON/XML 오류, `ServiceKey` 예외 |
 | `tests/test_convert.py` | 날짜/시간/숫자/결측값 변환 |
@@ -55,6 +59,8 @@
 | `tests/test_metadata.py` | 인증키 제거, call context, cache key |
 | `tests/test_pagination.py` | pageNo/numOfRows/totalCount 기반 순회 |
 | `tests/test_public_api.py` | 권장 public API export와 `py.typed` marker |
+| `tests/test_debug.py` | DebugRun 생성, 민감정보 마스킹, fixture 저장 |
+| `tests/test_generated_fixtures.py` | `tests/fixtures/**/*.json` replay 회귀 테스트 |
 
 ## 필수 검증 명령
 

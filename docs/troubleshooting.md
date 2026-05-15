@@ -13,6 +13,9 @@
 - 공공데이터포털에서 해당 OpenAPI 활용신청이 승인됐는지 확인한다.
 - Encoding 키와 Decoding 키를 모두 시도한다.
 - `AIRKOREA_SERVICE_KEY`에 공백이나 따옴표가 섞이지 않았는지 확인한다.
+- 환경변수가 없다면 현재 작업 디렉터리의 `.env`에 `AIRKOREA_SERVICE_KEY=...`가 있는지 확인한다.
+- 복사/붙여넣기로 섞인 앞뒤 공백, 줄바꿈, 탭은 클라이언트가 제거하지만, 키 중간에 잘못 들어간 문자는 포털에서 다시 복사한다.
+- API별 활용신청 링크는 `api_catalog_dicts()`의 `service_key_url` 또는 `DebugRun.catalog`에서 확인한다.
 - `UserSportSvc/getSvckeyDalyStats`는 `ServiceKey` 대문자 파라미터를 사용한다.
 
 ## 데이터 없음
