@@ -123,7 +123,7 @@ class Station(AirKoreaModel):
     def coordinates(self) -> PlaceCoordinate | None:
         if self.lat is None or self.lon is None:
             return None
-        return PlaceCoordinate(lon=self.lon, lat=self.lat)
+        return PlaceCoordinate(lat=self.lat, lon=self.lon)
 
 
 class NearbyStation(AirKoreaModel):
@@ -343,4 +343,4 @@ class EnglishStation(AirKoreaModel):
     def coordinates(self) -> PlaceCoordinate | None:
         if self.lat is None or self.lon is None:
             return None
-        return PlaceCoordinate(lon=self.lon, lat=self.lat)
+        return PlaceCoordinate(lat=self.lat, lon=self.lon)

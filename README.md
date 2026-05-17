@@ -58,7 +58,7 @@ mapping, `lat=..., lon=...` 호출도 계속 지원합니다.
 ```python
 from airkorea import PlaceCoordinate
 
-seoul_city_hall = PlaceCoordinate(lon=126.9780, lat=37.5665)
+seoul_city_hall = PlaceCoordinate(lat=37.5665, lon=126.9780)
 nearby = air.nearby_stations(coordinate=seoul_city_hall)
 measurement = air.measurement_near(coordinate=seoul_city_hall)
 ```

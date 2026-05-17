@@ -27,12 +27,12 @@ alarms = air.dust_alarms(2026, item_code=Pollutant.PM25)
 ## 좌표 표준
 
 위경도 public 경계는 `kraddr.base.PlaceCoordinate`를 기준으로 합니다.
-`PlaceCoordinate`는 WGS84 `lon, lat` 저장 순서를 쓰고, AirKorea TM 좌표는
-`tm_x, tm_y` 순서입니다. 기존 `LatLon`과 tuple 호환 입력은 `lat, lon` 순서를 유지합니다.
+`PlaceCoordinate`는 WGS84 public DTO에서 `lat, lon` 순서를 쓰고, AirKorea TM 좌표는
+`tm_x, tm_y` 순서입니다. GeoJSON/WKT/GIS 출력 경계에서만 해당 표준의 `lon, lat` 순서로 변환합니다.
 
 | 타입 | 의미 | 순서 |
 |---|---|---|
-| `PlaceCoordinate` | WGS84 위경도 | `lon, lat` |
+| `PlaceCoordinate` | WGS84 위경도 public DTO | `lat, lon` |
 | `TmPoint` | AirKorea TM 좌표 | `tm_x, tm_y` |
 
 권장:
@@ -40,7 +40,7 @@ alarms = air.dust_alarms(2026, item_code=Pollutant.PM25)
 ```python
 from airkorea import PlaceCoordinate
 
-point = PlaceCoordinate(lon=126.9780, lat=37.5665)
+point = PlaceCoordinate(lat=37.5665, lon=126.9780)
 nearby = air.nearby_stations(coordinate=point)
 ```
 

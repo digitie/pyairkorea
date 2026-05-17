@@ -34,8 +34,8 @@
 ## 라이브러리 표면
 
 - enum 입력: `DataTerm`, `InformCode`, `Pollutant`, `SidoName`, `StatsDataGubun`, `StatsSearchCondition`, `AirQualityGrade`
-- 좌표 입력: WGS84 public 경계는 `PlaceCoordinate(lon, lat)`, AirKorea TM은 `TmPoint(tm_x, tm_y)`
-- 기존 `LatLon(lat, lon)`, `(lat, lon)`, mapping, `lat=...`, `lon=...` 호출은 호환 유지
+- 좌표 입력: WGS84 public 경계는 `PlaceCoordinate(lat=..., lon=...)`, AirKorea TM은 `TmPoint(tm_x, tm_y)`
+- GeoJSON/WKT/GIS 출력 경계에서만 표준에 맞춰 `(lon, lat)` 순서로 변환
 - 기존 문자열 입력은 호환 유지
 - 응답 모델은 Pydantic v2 `BaseModel` 기반이며 `raw`를 보존하면서 enum/좌표 property를 제공
 - raw escape hatch: `AirKoreaClient.call()`과 `iter_pages()`는 `SUPPORTED_ENDPOINTS` 내 endpoint를 원본 page로 반환

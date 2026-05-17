@@ -136,7 +136,7 @@ def test_stations_maps_dmx_dmy_to_lat_lon() -> None:
     assert stations[0].year == 1997
     assert stations[0].lat == 37.572025
     assert stations[0].lon == 127.005028
-    assert stations[0].coordinates == PlaceCoordinate(lon=127.005028, lat=37.572025)
+    assert stations[0].coordinates == PlaceCoordinate(lat=37.572025, lon=127.005028)
     assert session.last_call.url.endswith("/MsrstnInfoInqireSvc/getMsrstnList")
     assert session.last_call.params["addr"] == "서울"
     assert session.last_call.params["stationName"] == "종로구"
@@ -174,7 +174,7 @@ def test_nearby_stations_accepts_direct_tm_and_place_coordinate() -> None:
     )
     place_client = AirKoreaClient("KEY", session=place_session, retries=0)
 
-    place_client.nearby_stations(coordinate=PlaceCoordinate(lon=126.9780, lat=37.5665))
+    place_client.nearby_stations(coordinate=PlaceCoordinate(lat=37.5665, lon=126.9780))
     place_client.nearby_stations(lat=37.5665, lon=126.9780)
 
     assert place_session.calls[0].params["tmX"] == pytest.approx(198242, abs=2)
@@ -285,7 +285,7 @@ def test_measurement_near_chains_nearby_station_then_measurement() -> None:
     )
     client = AirKoreaClient("KEY", session=session, retries=0)
 
-    result = client.measurement_near(coordinate=PlaceCoordinate(lon=126.9780, lat=37.5665))
+    result = client.measurement_near(coordinate=PlaceCoordinate(lat=37.5665, lon=126.9780))
 
     assert result is not None
     assert result.station_name == "종로구"
