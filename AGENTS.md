@@ -26,6 +26,14 @@
 - 런타임 의존성은 `pydantic`, `kraddr.base`, `pyproj`, `requests`입니다.
 - 기본 테스트는 실제 AirKorea 네트워크 호출 없이 fixture/fake session으로 동작해야 합니다.
 
+## Provider API 사용 원칙
+
+- 외부 API 관련 작업은 다른 구현보다 먼저 wrapper/adapter/gateway 지양 원칙을 확인하고 문서/코드에 반영한 뒤 진행합니다.
+- downstream이 직접 사용할 안정된 public client, typed model, enum, helper를 제공합니다.
+- 단순 전달용 wrapper, 장기 호환 alias, 임시 facade를 만들지 않습니다.
+- TripMate나 `python-krtour-map`에서 필요한 endpoint, pagination, cursor, exception, raw payload 계약이 부족하면 이 저장소의 public API를 먼저 안정화합니다.
+- 다른 라이브러리에 검증된 구현이 있으면 wrapper로 감싸지 말고 라이선스와 출처를 확인한 뒤 현재 구조에 직접 반영합니다.
+
 ## 핵심 불변 조건
 
 - 실제 `AIRKOREA_SERVICE_KEY`나 원본 인증키를 코드, fixture, 로그, 문서, 커밋에 남기지 않습니다.
@@ -38,7 +46,7 @@
 - 신규 응답 스키마가 불확실하면 확인된 필드만 Pydantic 모델로 파싱하고 `raw`를 보존합니다.
 - 결측값 `-`, 빈 문자열, `null`, `none`, `nan`은 `None`으로 처리하고 0으로 바꾸지 않습니다.
 - enum/type을 추가할 때 기존 문자열 입력 호환성을 유지합니다.
-- WGS84 public 좌표는 `kraddr.base.PlaceCoordinate(lon, lat)` 순서, AirKorea TM 좌표는 `TmPoint(tm_x, tm_y)` 순서로 고정합니다.
+- WGS84 public 좌표는 `kraddr.base.PlaceCoordinate(lat, lon)` 순서, AirKorea TM 좌표는 `TmPoint(tm_x, tm_y)` 순서로 고정합니다.
 - 기존 `LatLon(lat, lon)`, tuple, mapping, `lat=...`, `lon=...` 입력 호환성은 유지합니다.
 - 측정소정보의 `dmX`, `dmY`는 샘플 기준 위도/경도이며, 근접 측정소 API는 별도 TM 좌표를 요구합니다.
 

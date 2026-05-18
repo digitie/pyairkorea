@@ -111,7 +111,7 @@ AirKorea 응답은 서비스와 시점에 따라 `body.items`가 list, dict, `it
 
 - 문자열 입력은 계속 지원합니다.
 - 새 코드에서는 `DataTerm`, `InformCode`, `Pollutant`, `SidoName`, `StatsDataGubun`, `StatsSearchCondition` enum 사용을 권장합니다.
-- WGS84 좌표 public 경계는 `kraddr.base.PlaceCoordinate(lon, lat)`로 표준화합니다.
+- WGS84 좌표 public 경계는 `kraddr.base.PlaceCoordinate(lat, lon)`으로 표준화합니다.
 - AirKorea TM 좌표는 `TmPoint(tm_x, tm_y)`로 표준화합니다.
 - `nearby_stations()`와 `measurement_near()`는 `PlaceCoordinate`, `LatLon`, `(lat, lon)`, mapping, 기존 `lat=...`, `lon=...` 입력을 모두 받습니다.
 - 응답 모델은 `khai_grade_enum`, `item_code_enum`, `inform_code_enum`, `coordinates` 같은 후처리용 property를 제공합니다.
