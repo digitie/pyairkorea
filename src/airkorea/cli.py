@@ -45,9 +45,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
     client = (
-        AirKoreaClient(args.service_key)
+        AirKoreaClient(service_key=args.service_key)
         if args.service_key
-        else AirKoreaClient.from_env()
+        else AirKoreaClient()
     )
 
     result: Any

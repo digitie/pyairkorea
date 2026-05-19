@@ -32,7 +32,7 @@ PowerShell:
 $env:AIRKOREA_SERVICE_KEY="발급받은_인증키"
 ```
 
-환경변수가 없으면 `AirKoreaClient.from_env()`는 현재 작업 디렉터리의 `.env`에서 같은 이름을 찾습니다.
+`AirKoreaClient()`는 `python-krheritage-api`와 같은 facade 형태로 서비스키를 키워드 인자로 받습니다. `service_key`를 생략하면 `AIRKOREA_SERVICE_KEY` 환경변수와 현재 작업 디렉터리의 `.env`를 순서대로 확인합니다.
 
 ```dotenv
 AIRKOREA_SERVICE_KEY=발급받은_인증키
@@ -45,11 +45,20 @@ AIRKOREA_SERVICE_KEY=발급받은_인증키
 ```python
 from airkorea import AirKoreaClient, DataTerm, SidoName
 
-air = AirKoreaClient.from_env()
+air = AirKoreaClient()
 
 latest = air.latest_station_measurement("종로구", data_term=DataTerm.DAILY)
 for row in air.sido_measurements(SidoName.SEOUL, num_of_rows=5):
     print(row.station_name, row.pm10_value, row.pm25_value, row.khai_grade_enum)
+```
+
+비동기 코드는 `AirKoreaClient.aio()`가 반환하는 `AsyncAirKoreaClient`를 사용합니다.
+
+```python
+from airkorea import AirKoreaClient
+
+async with AirKoreaClient.aio() as air:
+    rows = await air.station_measurements("종로구", num_of_rows=1)
 ```
 
 좌표는 `kraddr.base`의 `PlaceCoordinate`를 권장합니다. 기존 `LatLon`, tuple,
@@ -148,7 +157,7 @@ Streamlit 같은 외부 Web UI에서 입력값을 바꿔가며 실행한 결과�
 ```python
 from airkorea import AirKoreaClient, run_debug_method, save_debug_fixture
 
-air = AirKoreaClient.from_env()
+air = AirKoreaClient()
 debug_run = run_debug_method(
     air,
     "station_measurements",

@@ -28,7 +28,7 @@ class FakeClient:
     last_from_env_called = False
     last_call: tuple[str, dict[str, Any]] | None = None
 
-    def __init__(self, service_key: str) -> None:
+    def __init__(self, service_key: str | None = None) -> None:
         FakeClient.last_init_key = service_key
 
     @classmethod
@@ -94,7 +94,8 @@ def test_cli_nearby_uses_env_and_latlon(capsys: pytest.CaptureFixture[str]) -> N
     result = cli.main(["nearby", "--lat", "37.5665", "--lon", "126.9780"])
 
     assert result == 0
-    assert FakeClient.last_from_env_called is True
+    assert FakeClient.last_from_env_called is False
+    assert FakeClient.last_init_key is None
     assert FakeClient.last_call == (
         "nearby_stations",
         {"lat": 37.5665, "lon": 126.978},

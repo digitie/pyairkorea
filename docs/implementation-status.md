@@ -25,7 +25,7 @@
 | public client/API 목록 | `src/airkorea/client.py` |
 | enum/코드 정규화 | `src/airkorea/codes.py` |
 | 좌표 호환 입력/AirKorea TM 변환 | `src/airkorea/coords.py` |
-| HTTP envelope/result-code 처리 | `src/airkorea/_http.py` |
+| httpx 동기/비동기 HTTP envelope/result-code 처리 | `src/airkorea/_http.py` |
 | 호출 context/캐시 키 | `src/airkorea/metadata.py` |
 | 페이지 순회 helper | `src/airkorea/pagination.py` |
 | Pydantic 응답 모델 | `src/airkorea/models.py` |
@@ -34,11 +34,13 @@
 ## 라이브러리 표면
 
 - enum 입력: `DataTerm`, `InformCode`, `Pollutant`, `SidoName`, `StatsDataGubun`, `StatsSearchCondition`, `AirQualityGrade`
+- 클라이언트 facade: `AirKoreaClient(service_key=...)`, `AirKoreaClient.aio(service_key=...)`, `AsyncAirKoreaClient`
 - 좌표 입력: WGS84 public 경계는 `PlaceCoordinate(lat=..., lon=...)`, AirKorea TM은 `TmPoint(tm_x, tm_y)`
 - GeoJSON/WKT/GIS 출력 경계에서만 표준에 맞춰 `(lon, lat)` 순서로 변환
+- 기존 `LatLon(lat, lon)`, `(lat, lon)`, mapping, `lat=...`, `lon=...` 호출은 호환 유지
 - 기존 문자열 입력은 호환 유지
 - 응답 모델은 Pydantic v2 `BaseModel` 기반이며 `raw`를 보존하면서 enum/좌표 property를 제공
-- raw escape hatch: `AirKoreaClient.call()`과 `iter_pages()`는 `SUPPORTED_ENDPOINTS` 내 endpoint를 원본 page로 반환
+- raw escape hatch: `AirKoreaClient.call()`과 `iter_pages()`는 `SUPPORTED_ENDPOINTS` 내 endpoint를 원본 page로 반환하며, 비동기 클라이언트도 같은 이름을 제공
 - provenance/cache helper: `AirKoreaCallContext`, `sanitize_request_params`, `make_cache_key`
 - debug fixture helper: `DebugRun`, `run_debug_method`, `save_debug_fixture`
 - API catalog helper: `ApiCatalogEntry`, `api_catalog`, `api_catalog_dicts`
@@ -48,10 +50,10 @@
 
 | 테스트 | 검증 내용 |
 |---|---|
-| `tests/test_client.py` | 기존 대기오염정보/측정소정보/좌표 convenience 메서드 |
+| `tests/test_client.py` | 대기오염정보/측정소정보/좌표 convenience 메서드와 비동기 클라이언트 |
 | `tests/test_catalog.py` | API 카탈로그, 데이터셋명, 서비스키 링크 |
 | `tests/test_expanded_api.py` | 누락 서비스군 endpoint, 파라미터, 모델 파싱 |
-| `tests/test_http.py` | HTTP 상태, resultCode, JSON/XML 오류, `ServiceKey` 예외 |
+| `tests/test_http.py` | httpx 기반 HTTP 상태, resultCode, JSON/XML 오류, `ServiceKey` 예외 |
 | `tests/test_convert.py` | 날짜/시간/숫자/결측값 변환 |
 | `tests/test_codes.py` | 등급, 시도명, 예보코드, dataTerm 검증 |
 | `tests/test_coords.py` | WGS84/AirKorea TM 변환 |

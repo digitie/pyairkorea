@@ -19,7 +19,7 @@ Web UI는 테스트 코드를 생성하지 않습니다. 저장된 fixture JSON�
 ```python
 from airkorea import AirKoreaClient, run_debug_method
 
-air = AirKoreaClient.from_env()
+air = AirKoreaClient()
 debug_run = run_debug_method(
     air,
     "station_measurements",

@@ -23,7 +23,7 @@
 - 지원 범위는 공공데이터포털의 AirKorea 계열 B552584 OpenAPI이며, 비점오염원/재활용/냉매 같은 비-AirKorea 서비스는 범위 밖입니다.
 - 구현 기준 목록은 `src/airkorea/client.py`의 `SUPPORTED_ENDPOINTS`와 `airkorea-api.md`입니다.
 - Python 지원 기준은 3.10 이상입니다.
-- 런타임 의존성은 `pydantic`, `kraddr.base`, `pyproj`, `requests`입니다.
+- 런타임 의존성은 `pydantic`, `kraddr.base`, `pyproj`, `httpx`입니다.
 - 기본 테스트는 실제 AirKorea 네트워크 호출 없이 fixture/fake session으로 동작해야 합니다.
 
 ## Provider API 사용 원칙

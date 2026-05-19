@@ -2,6 +2,27 @@
 
 외부 프로그램에서 `airkorea`를 안정적으로 사용하기 위한 public 타입과 좌표 규칙입니다.
 
+## 클라이언트 형태
+
+클라이언트 facade는 `python-krheritage-api`와 같은 형태를 따릅니다. `AirKoreaClient()`는 동기 클라이언트이고, `AirKoreaClient.aio()`는 같은 public method를 `await`로 호출하는 `AsyncAirKoreaClient`를 반환합니다.
+
+```python
+from airkorea import AirKoreaClient
+
+air = AirKoreaClient()
+rows = air.station_measurements("종로구", num_of_rows=1)
+
+async with AirKoreaClient.aio() as async_air:
+    async_rows = await async_air.station_measurements("종로구", num_of_rows=1)
+```
+
+서비스키를 명시할 때는 키워드 인자를 사용합니다.
+
+```python
+air = AirKoreaClient(service_key="decoded-service-key")
+async_air = AirKoreaClient.aio(service_key="decoded-service-key")
+```
+
 ## 문자열 호환 enum
 
 기존 문자열 기반 코드는 계속 동작합니다. 새 코드에서는 enum 사용을 권장합니다.
@@ -19,7 +40,7 @@
 ```python
 from airkorea import AirKoreaClient, Pollutant, SidoName
 
-air = AirKoreaClient.from_env()
+air = AirKoreaClient()
 rows = air.sido_measurements(SidoName.SEOUL)
 alarms = air.dust_alarms(2026, item_code=Pollutant.PM25)
 ```
@@ -138,13 +159,14 @@ cache_key = make_cache_key("getMsrstnList", safe_params, service_name="MsrstnInf
 
 ## 서비스키 로딩
 
-`AirKoreaClient.from_env()`는 기본적으로 `AIRKOREA_SERVICE_KEY` 환경변수를 읽고, 값이 없으면 현재 작업 디렉터리의 `.env` 파일에서 같은 이름을 찾습니다. 외부 UI에서 `.env` 경로를 직접 지정할 수도 있습니다.
+`AirKoreaClient()`와 `AirKoreaClient.aio()`는 `service_key`를 생략하면 기본적으로 `AIRKOREA_SERVICE_KEY` 환경변수를 읽고, 값이 없으면 현재 작업 디렉터리의 `.env` 파일에서 같은 이름을 찾습니다. 외부 UI에서 `.env` 경로를 직접 지정해야 할 때는 `from_env()`를 사용할 수 있습니다.
 
 ```python
 from airkorea import AirKoreaClient
 
-air = AirKoreaClient.from_env()
+air = AirKoreaClient()
 air_from_file = AirKoreaClient.from_env(dotenv_path="local.env")
+async_air = AirKoreaClient.aio()
 ```
 
 서비스키는 클라이언트 내부에서 `normalize_service_key()`를 거치므로, 복사/붙여넣기 중 섞인 앞뒤 공백, 줄바꿈, 탭은 제거됩니다.
@@ -178,7 +200,7 @@ selected = api_catalog_for_method("station_measurements")
 ```python
 from airkorea import AirKoreaClient, run_debug_method, save_debug_fixture
 
-air = AirKoreaClient.from_env()
+air = AirKoreaClient()
 debug_run = run_debug_method(
     air,
     "station_measurements",

@@ -41,7 +41,7 @@ def replay_case(case: Mapping[str, Any]) -> Any:
     """fixture의 저장 응답을 fake session에 넣어 public method를 재실행합니다."""
 
     session = FakeSession([_fake_response(response) for response in _fixture_responses(case)])
-    client = AirKoreaClient("fixture-key", session=session, retries=0)
+    client = AirKoreaClient(service_key="fixture-key", session=session, retries=0)
     function_name = str(case["function"])
     try:
         runner = RUNNERS[function_name]

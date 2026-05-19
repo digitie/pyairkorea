@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-import pytest
-import requests
+import asyncio
 
-from airkorea._http import HttpClient
+import httpx
+import pytest
+
+from airkorea._http import AsyncHttpClient, HttpClient
 from airkorea.exceptions import (
     AirKoreaAuthError,
     AirKoreaNetworkError,
@@ -13,12 +15,17 @@ from airkorea.exceptions import (
     AirKoreaRequestError,
     AirKoreaServerError,
 )
-from tests.conftest import FakeResponse, FakeSession, error_payload, payload
+from tests.conftest import AsyncFakeSession, FakeResponse, FakeSession, error_payload, payload
 
 
 class TimeoutSession:
     def get(self, url, *, params, timeout):  # type: ignore[no-untyped-def]
-        raise requests.Timeout("slow")
+        raise httpx.TimeoutException("slow")
+
+
+class AsyncTimeoutSession:
+    async def get(self, url, *, params, timeout):  # type: ignore[no-untyped-def]
+        raise httpx.TimeoutException("slow")
 
 
 def test_request_adds_common_params() -> None:
@@ -164,3 +171,45 @@ def test_malformed_envelope_raises_parse_error(json_data: object) -> None:
 
     with pytest.raises(AirKoreaParseError):
         client.get_body("https://example.test", "endpoint", {})
+
+
+def test_async_request_adds_common_params() -> None:
+    async def run() -> None:
+        session = AsyncFakeSession([FakeResponse(json_data=payload([]))])
+        client = AsyncHttpClient("decoded-key", session=session, retries=0)
+
+        body = await client.get_body("https://example.test/base", "endpoint", {"pageNo": 1})
+
+        assert body["items"] == []
+        assert session.last_call.url == "https://example.test/base/endpoint"
+        assert session.last_call.params["serviceKey"] == "decoded-key"
+        assert session.last_call.params["returnType"] == "json"
+        assert session.last_call.params["pageNo"] == 1
+
+    asyncio.run(run())
+
+
+def test_async_5xx_retries_then_succeeds() -> None:
+    async def run() -> None:
+        session = AsyncFakeSession(
+            [
+                FakeResponse(status_code=500, text="server down"),
+                FakeResponse(json_data=payload([]), status_code=200),
+            ]
+        )
+        client = AsyncHttpClient("KEY", session=session, retries=1, retry_backoff=0)
+
+        assert (await client.get_body("https://example.test", "endpoint", {}))["items"] == []
+        assert len(session.calls) == 2
+
+    asyncio.run(run())
+
+
+def test_async_network_timeout_maps_to_network_error() -> None:
+    async def run() -> None:
+        client = AsyncHttpClient("KEY", session=AsyncTimeoutSession(), retries=0)
+
+        with pytest.raises(AirKoreaNetworkError):
+            await client.get_body("https://example.test", "endpoint", {})
+
+    asyncio.run(run())

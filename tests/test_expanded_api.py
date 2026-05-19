@@ -70,7 +70,7 @@ def test_statistics_methods_map_params_and_models() -> None:
             ),
         ]
     )
-    client = AirKoreaClient("KEY", session=session, retries=0)
+    client = AirKoreaClient(service_key="KEY", session=session, retries=0)
 
     sido = client.sido_average_stats(
         item_code=Pollutant.PM25,
@@ -205,7 +205,7 @@ def test_remaining_airkorea_services_map_params_and_models() -> None:
             ),
         ]
     )
-    client = AirKoreaClient("KEY", session=session, retries=0)
+    client = AirKoreaClient(service_key="KEY", session=session, retries=0)
 
     ozone = client.ozone_advisories(year=2026)
     yellow_dust = client.yellow_dust_advisories(year="2026")
@@ -248,7 +248,7 @@ def test_remaining_airkorea_services_map_params_and_models() -> None:
 
 def test_malformed_new_api_item_raises_parse_error() -> None:
     session = FakeSession([FakeResponse(json_data=payload({"dataTime": "not-a-date"}))])
-    client = AirKoreaClient("KEY", session=session, retries=0)
+    client = AirKoreaClient(service_key="KEY", session=session, retries=0)
 
     with pytest.raises(AirKoreaParseError):
         client.sido_average_stats(item_code="PM10")

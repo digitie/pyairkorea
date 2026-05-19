@@ -22,6 +22,7 @@ python -m mypy src/airkorea
 - 서비스 목록은 `SUPPORTED_ENDPOINTS`와 `tests/test_expanded_api.py`가 서로 맞아야 한다.
 - API 카탈로그는 `SUPPORTED_ENDPOINTS` 전체를 덮어야 하며 데이터셋명과 서비스키 링크를 포함해야 한다.
 - raw `call()`/`iter_pages()`는 인증키성 params를 실제 요청과 context에서 제거하고, `pageNo` 순회를 fixture로 검증한다.
+- 비동기 클라이언트는 실제 네트워크 없이 fake async session으로 동기 클라이언트와 같은 파라미터/모델/페이지 순회 결과를 검증한다.
 - public API를 새로 추가하면 `tests/test_public_api.py`의 권장 export 목록도 함께 갱신한다.
 
 ## 디버그 fixture replay
@@ -42,6 +43,11 @@ fixture 형식과 Web UI 연동 방식은 `docs/debug-fixtures.md`에 정리합�
 
 - `@pytest.mark.integration`을 붙인다.
 - `AIRKOREA_SERVICE_KEY`가 없으면 skip한다.
+- 기본 테스트 경로에서 네트워크를 쓰지 않도록 live smoke test는 `AIRKOREA_RUN_LIVE=1`을 함께 요구한다.
 - 특정 농도값이나 문구를 고정 assert하지 않는다.
 - 응답이 비어 있을 수 있는 API는 empty list를 실패로 보지 않는다.
 - rate limit과 포털 장애를 고려해 CI 기본 경로에서는 실행하지 않는다.
+
+```bash
+AIRKOREA_RUN_LIVE=1 AIRKOREA_SERVICE_KEY=<decoded service key> python -m pytest tests/test_live_api.py
+```

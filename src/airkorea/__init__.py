@@ -10,7 +10,7 @@ from airkorea.catalog import (
     api_catalog_for_method,
     get_api_catalog_entry,
 )
-from airkorea.client import SUPPORTED_ENDPOINTS, AirKoreaClient
+from airkorea.client import SUPPORTED_ENDPOINTS, AirKoreaClient, AsyncAirKoreaClient
 from airkorea.codes import (
     AirQualityGrade,
     DataTerm,
@@ -82,9 +82,15 @@ from airkorea.models import (
     TrafficStat,
     WeeklyForecastNotice,
 )
-from airkorea.pagination import has_next_page, iter_paginated_pages, next_page_no
+from airkorea.pagination import (
+    aiter_paginated_pages,
+    has_next_page,
+    iter_paginated_pages,
+    next_page_no,
+)
 
 __version__ = "0.4.0"
+PROVIDER_NAME = "python-airkorea-api"
 
 __all__ = [
     "AirKoreaAuthError",
@@ -104,6 +110,7 @@ __all__ = [
     "AirQualityStat",
     "ApiCatalogEntry",
     "AdvisoryOccurrence",
+    "AsyncAirKoreaClient",
     "BackgroundConcentration",
     "CaiMeasurement",
     "DataTerm",
@@ -121,6 +128,7 @@ __all__ = [
     "NearbyStation",
     "Pollutant",
     "PlaceCoordinate",
+    "PROVIDER_NAME",
     "RawRecord",
     "SidoName",
     "Station",
@@ -137,6 +145,7 @@ __all__ = [
     "api_catalog_dicts",
     "api_catalog_for_debug_input",
     "api_catalog_for_method",
+    "aiter_paginated_pages",
     "coerce_latlon",
     "coerce_tm_point",
     "get_api_catalog_entry",

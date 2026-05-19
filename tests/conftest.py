@@ -48,6 +48,22 @@ class FakeSession:
         return self._responses.pop(0)
 
 
+class AsyncFakeSession:
+    def __init__(self, responses: list[FakeResponse]) -> None:
+        self._responses = list(responses)
+        self.calls: list[Call] = []
+
+    @property
+    def last_call(self) -> Call:
+        return self.calls[-1]
+
+    async def get(self, url: str, *, params: Mapping[str, Any], timeout: float) -> FakeResponse:
+        self.calls.append(Call(url=url, params=dict(params), timeout=timeout))
+        if not self._responses:
+            raise AssertionError("AsyncFakeSession has no queued responses")
+        return self._responses.pop(0)
+
+
 def payload(items: Any, *, body_extra: dict[str, Any] | None = None) -> dict[str, Any]:
     body: dict[str, Any] = {"items": items}
     if body_extra:

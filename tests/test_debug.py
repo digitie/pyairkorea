@@ -44,7 +44,7 @@ def measurement_row() -> dict[str, object]:
 
 def test_run_debug_method_captures_safe_request_response() -> None:
     session = FakeSession([FakeResponse(json_data=payload([measurement_row()]))])
-    client = AirKoreaClient("decoded-key", session=session, retries=0)
+    client = AirKoreaClient(service_key="decoded-key", session=session, retries=0)
 
     debug_run = run_debug_method(
         client,
@@ -65,7 +65,7 @@ def test_run_debug_method_captures_safe_request_response() -> None:
 
 
 def test_run_debug_method_returns_validation_error_without_http_call() -> None:
-    client = AirKoreaClient("decoded-key", session=FakeSession([]), retries=0)
+    client = AirKoreaClient(service_key="decoded-key", session=FakeSession([]), retries=0)
 
     debug_run = run_debug_method(client, "sido_measurements", {"sido_name": "서울특별시"})
 
@@ -77,7 +77,7 @@ def test_run_debug_method_returns_validation_error_without_http_call() -> None:
 
 def test_save_debug_fixture_redacts_and_prevents_overwrite(tmp_path) -> None:
     session = FakeSession([FakeResponse(json_data=payload([measurement_row()]))])
-    client = AirKoreaClient("decoded-key", session=session, retries=0)
+    client = AirKoreaClient(service_key="decoded-key", session=session, retries=0)
     debug_run = run_debug_method(
         client,
         "station_measurements",
