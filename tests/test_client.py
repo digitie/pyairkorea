@@ -415,9 +415,9 @@ def test_call_rejects_unknown_service_or_endpoint() -> None:
 
 
 def test_from_env_reads_default_dotenv_file(monkeypatch, tmp_path) -> None:
-    monkeypatch.delenv("AIRKOREA_SERVICE_KEY", raising=False)
+    monkeypatch.delenv("DATA_GO_KR_SERVICE_KEY", raising=False)
     monkeypatch.chdir(tmp_path)
-    (tmp_path / ".env").write_text("AIRKOREA_SERVICE_KEY= local-key \n", encoding="utf-8")
+    (tmp_path / ".env").write_text("DATA_GO_KR_SERVICE_KEY= local-key \n", encoding="utf-8")
 
     client = AirKoreaClient.from_env(session=FakeSession([]), retries=0)
 

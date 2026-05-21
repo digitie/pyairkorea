@@ -77,15 +77,15 @@ def main() -> None:
                 value="",
                 type="password",
                 placeholder="직접 입력",
-                help="AIRKOREA_SERVICE_KEY 환경변수 또는 .env 값도 사용할 수 있습니다.",
+                help="DATA_GO_KR_SERVICE_KEY 환경변수 또는 .env 값도 사용할 수 있습니다.",
             )
             effective_service_key = service_key_input
         else:
             effective_service_key = loaded_key
             if loaded_key:
-                st.caption("AIRKOREA_SERVICE_KEY 값을 사용합니다. Source: process env 또는 .env")
+                st.caption("DATA_GO_KR_SERVICE_KEY 값을 사용합니다. Source: process env 또는 .env")
             else:
-                st.warning("AIRKOREA_SERVICE_KEY 값을 찾지 못했습니다.")
+                st.warning("DATA_GO_KR_SERVICE_KEY 값을 찾지 못했습니다.")
         _service_key_links(selected_catalog)
 
         timeout = st.number_input("Timeout", min_value=1.0, max_value=60.0, value=10.0)
@@ -352,7 +352,7 @@ def _debug_trace_tab(
     else:
         st.json(selected_catalog[0] if len(selected_catalog) == 1 else selected_catalog)
         _service_key_links(selected_catalog)
-    st.caption("credential env: AIRKOREA_SERVICE_KEY")
+    st.caption("credential env: DATA_GO_KR_SERVICE_KEY")
 
     st.subheader("Trace")
     if debug_run:

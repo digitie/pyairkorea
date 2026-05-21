@@ -129,7 +129,7 @@ fixture 저장 전 `input`, `request`, `response`, `parsed`, `processed`는 모�
 
 - `serviceKey`, `ServiceKey`, `api_key`, `apikey`, `Authorization`, `x-api-key`, `access_token`, `refresh_token`은 `<REDACTED>`로 치환합니다.
 - `AirKoreaCallContext.request_params`와 HTTP debug exchange는 인증키성 request param을 저장하지 않습니다.
-- 실제 `AIRKOREA_SERVICE_KEY`나 원본 인증키를 fixture, 로그, 문서에 남기지 않습니다.
+- 실제 `DATA_GO_KR_SERVICE_KEY`나 원본 인증키를 fixture, 로그, 문서에 남기지 않습니다.
 
 ## Assertion mode
 

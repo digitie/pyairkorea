@@ -66,5 +66,5 @@ testpaths = ["tests"]
 addopts = "-ra"
 pythonpath = ["src"]
 markers = [
-  "integration: tests that call the real AirKorea API and require AIRKOREA_SERVICE_KEY",
+  "integration: tests that call the real AirKorea API and require DATA_GO_KR_SERVICE_KEY",
 ]

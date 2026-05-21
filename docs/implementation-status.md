@@ -80,5 +80,5 @@ python -m mypy src/airkorea
 
 - 인증키와 포털 승인 상태가 필요합니다.
 - 실시간 데이터는 측정소/시간/장비 상태에 따라 달라집니다.
-- live 테스트를 추가할 때는 `@pytest.mark.integration`을 붙이고 `AIRKOREA_SERVICE_KEY`가 없으면 skip해야 합니다.
+- live 테스트를 추가할 때는 `@pytest.mark.integration`을 붙이고 `DATA_GO_KR_SERVICE_KEY`가 없으면 skip해야 합니다.
 - live 테스트에서는 특정 농도값을 고정 assert하지 말고 envelope, 필드 존재, 타입 정도만 확인합니다.

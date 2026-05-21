@@ -18,7 +18,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="airkorea")
     parser.add_argument(
         "--service-key",
-        help="AirKorea decoded service key. Defaults to AIRKOREA_SERVICE_KEY.",
+        help="AirKorea decoded service key. Defaults to DATA_GO_KR_SERVICE_KEY.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 

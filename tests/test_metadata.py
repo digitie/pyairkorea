@@ -66,8 +66,8 @@ def test_load_service_key_prefers_environment_and_strips_whitespace(
     tmp_path,
 ) -> None:
     dotenv = tmp_path / ".env"
-    dotenv.write_text('AIRKOREA_SERVICE_KEY=" file-key "\n', encoding="utf-8")
-    monkeypatch.setenv("AIRKOREA_SERVICE_KEY", " env-\nkey ")
+    dotenv.write_text('DATA_GO_KR_SERVICE_KEY=" file-key "\n', encoding="utf-8")
+    monkeypatch.setenv("DATA_GO_KR_SERVICE_KEY", " env-\nkey ")
 
     assert load_service_key(dotenv_path=dotenv) == "env-key"
 
@@ -76,13 +76,13 @@ def test_load_service_key_reads_local_dotenv_when_environment_missing(
     monkeypatch,
     tmp_path,
 ) -> None:
-    monkeypatch.delenv("AIRKOREA_SERVICE_KEY", raising=False)
+    monkeypatch.delenv("DATA_GO_KR_SERVICE_KEY", raising=False)
     monkeypatch.chdir(tmp_path)
     (tmp_path / ".env").write_text(
-        "\ufeffOTHER=value\nexport AIRKOREA_SERVICE_KEY=' local key '\n",
+        "\ufeffOTHER=value\nexport DATA_GO_KR_SERVICE_KEY=' local key '\n",
         encoding="utf-8",
     )
 
-    assert load_env_value("AIRKOREA_SERVICE_KEY") == " local key "
+    assert load_env_value("DATA_GO_KR_SERVICE_KEY") == " local key "
     assert load_service_key() == "localkey"
     assert normalize_service_key(" key\r\nwith spaces\t") == "keywithspaces"

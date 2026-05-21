@@ -159,7 +159,7 @@ cache_key = make_cache_key("getMsrstnList", safe_params, service_name="MsrstnInf
 
 ## 서비스키 로딩
 
-`AirKoreaClient()`와 `AirKoreaClient.aio()`는 `service_key`를 생략하면 기본적으로 `AIRKOREA_SERVICE_KEY` 환경변수를 읽고, 값이 없으면 현재 작업 디렉터리의 `.env` 파일에서 같은 이름을 찾습니다. 외부 UI에서 `.env` 경로를 직접 지정해야 할 때는 `from_env()`를 사용할 수 있습니다.
+`AirKoreaClient()`와 `AirKoreaClient.aio()`는 `service_key`를 생략하면 기본적으로 `DATA_GO_KR_SERVICE_KEY` 환경변수를 읽고, 값이 없으면 현재 작업 디렉터리의 `.env` 파일에서 같은 이름을 찾습니다. 외부 UI에서 `.env` 경로를 직접 지정해야 할 때는 `from_env()`를 사용할 수 있습니다.
 
 ```python
 from airkorea import AirKoreaClient

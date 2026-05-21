@@ -36,7 +36,7 @@
 
 ## 핵심 불변 조건
 
-- 실제 `AIRKOREA_SERVICE_KEY`나 원본 인증키를 코드, fixture, 로그, 문서, 커밋에 남기지 않습니다.
+- 실제 `DATA_GO_KR_SERVICE_KEY`나 원본 인증키를 코드, fixture, 로그, 문서, 커밋에 남기지 않습니다.
 - 대부분의 API 인증 파라미터는 `serviceKey`이지만 `UserSportSvc/getSvckeyDalyStats`는 공식 명세대로 `ServiceKey`를 사용합니다.
 - `getCtprvnMesureLIst`, `getCtprvnMesureSidoLIst`의 `LIst` 철자를 바꾸지 않습니다.
 - 월평균 endpoint는 `getMsrstnAcctoRMmrg`입니다. `getMsrstnAcctoRmmrg`로 고치지 않습니다.
@@ -124,7 +124,7 @@ python -m mypy src/airkorea
 실제 API 테스트를 추가할 경우 opt-in으로 둡니다.
 
 ```bash
-AIRKOREA_SERVICE_KEY=<decoded service key> python -m pytest -m integration
+DATA_GO_KR_SERVICE_KEY=<decoded service key> python -m pytest -m integration
 ```
 
 ## 반복 실수 방지

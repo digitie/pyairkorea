@@ -23,19 +23,19 @@ pip install -e ".[dev]"
 공공데이터포털에서 필요한 AirKorea OpenAPI 활용신청을 한 뒤 일반 인증키를 환경변수로 저장합니다.
 
 ```bash
-export AIRKOREA_SERVICE_KEY="발급받은_인증키"
+export DATA_GO_KR_SERVICE_KEY="발급받은_인증키"
 ```
 
 PowerShell:
 
 ```powershell
-$env:AIRKOREA_SERVICE_KEY="발급받은_인증키"
+$env:DATA_GO_KR_SERVICE_KEY="발급받은_인증키"
 ```
 
 `AirKoreaClient()`는 `python-krheritage-api`와 같은 facade 형태로 서비스키를 키워드 인자로 받습니다. `service_key`를 생략하면 `AIRKOREA_SERVICE_KEY` 환경변수와 현재 작업 디렉터리의 `.env`를 순서대로 확인합니다.
 
 ```dotenv
-AIRKOREA_SERVICE_KEY=발급받은_인증키
+DATA_GO_KR_SERVICE_KEY=발급받은_인증키
 ```
 
 포털에서 키를 복사하면서 앞뒤 공백, 줄바꿈, 탭이 섞여도 클라이언트 생성 시 제거합니다.

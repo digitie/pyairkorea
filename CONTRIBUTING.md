@@ -36,4 +36,4 @@ python -m mypy src/airkorea
 
 ## Live API 테스트
 
-실제 AirKorea 호출 테스트는 기본 테스트에 넣지 않습니다. 필요한 경우 `@pytest.mark.integration`을 사용하고 `AIRKOREA_SERVICE_KEY`가 없으면 skip하세요.
+실제 AirKorea 호출 테스트는 기본 테스트에 넣지 않습니다. 필요한 경우 `@pytest.mark.integration`을 사용하고 `DATA_GO_KR_SERVICE_KEY`가 없으면 skip하세요.

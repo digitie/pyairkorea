@@ -56,7 +56,7 @@ def load_env_value(
 
 
 def load_service_key(
-    name: str = "AIRKOREA_SERVICE_KEY",
+    name: str = "DATA_GO_KR_SERVICE_KEY",
     *,
     dotenv_path: str | os.PathLike[str] | None = ".env",
 ) -> str | None:
