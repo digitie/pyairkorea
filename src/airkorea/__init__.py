@@ -1,7 +1,5 @@
 """한국환경공단 AirKorea API용 Python 클라이언트."""
 
-from kraddr.base import PlaceCoordinate
-
 from airkorea.catalog import (
     ApiCatalogEntry,
     api_catalog,
@@ -127,7 +125,6 @@ __all__ = [
     "LatLonLike",
     "NearbyStation",
     "Pollutant",
-    "PlaceCoordinate",
     "PROVIDER_NAME",
     "RawRecord",
     "SidoName",

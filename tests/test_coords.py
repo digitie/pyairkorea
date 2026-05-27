@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-from kraddr.base import PlaceCoordinate
 
 from airkorea.coords import (
     LatLon,
@@ -46,7 +45,7 @@ def test_coordinate_value_objects_roundtrip() -> None:
 
 
 def test_coordinate_coercion_accepts_common_shapes() -> None:
-    coord = PlaceCoordinate(lat=37.5, lon=127.0)
+    coord = LatLon(lat=37.5, lon=127.0)
 
     assert coerce_latlon(coord) == LatLon(37.5, 127.0)
     assert coerce_latlon((37.5, 127.0)) == LatLon(37.5, 127.0)
@@ -57,7 +56,7 @@ def test_coordinate_coercion_accepts_common_shapes() -> None:
 
 
 def test_resolve_airkorea_tm_rejects_mixed_coordinate_modes() -> None:
-    resolved = resolve_airkorea_tm(coordinate=PlaceCoordinate(lat=37.5665, lon=126.9780))
+    resolved = resolve_airkorea_tm(coordinate=LatLon(lat=37.5665, lon=126.9780))
 
     assert resolved.tm_x == pytest.approx(198242, abs=2)
     assert resolved.tm_y == pytest.approx(451580, abs=2)

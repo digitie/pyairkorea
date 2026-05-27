@@ -6,10 +6,10 @@ from collections.abc import Mapping
 from datetime import date, datetime, timezone
 from typing import Any, Generic, TypeVar
 
-from kraddr.base import PlaceCoordinate
 from pydantic import BaseModel, ConfigDict, Field
 
 from airkorea.codes import AirQualityGrade, InformCode, Pollutant
+from airkorea.coords import LatLon
 
 RawRecord = Mapping[str, Any]
 T = TypeVar("T")
@@ -120,10 +120,10 @@ class Station(AirKoreaModel):
     raw: RawRecord = Field(repr=False)
 
     @property
-    def coordinates(self) -> PlaceCoordinate | None:
+    def coordinates(self) -> LatLon | None:
         if self.lat is None or self.lon is None:
             return None
-        return PlaceCoordinate(lat=self.lat, lon=self.lon)
+        return LatLon(lat=self.lat, lon=self.lon)
 
 
 class NearbyStation(AirKoreaModel):
@@ -340,7 +340,7 @@ class EnglishStation(AirKoreaModel):
     raw: RawRecord = Field(repr=False)
 
     @property
-    def coordinates(self) -> PlaceCoordinate | None:
+    def coordinates(self) -> LatLon | None:
         if self.lat is None or self.lon is None:
             return None
-        return PlaceCoordinate(lat=self.lat, lon=self.lon)
+        return LatLon(lat=self.lat, lon=self.lon)

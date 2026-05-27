@@ -35,7 +35,7 @@
 
 - enum 입력: `DataTerm`, `InformCode`, `Pollutant`, `SidoName`, `StatsDataGubun`, `StatsSearchCondition`, `AirQualityGrade`
 - 클라이언트 facade: `AirKoreaClient(service_key=...)`, `AirKoreaClient.aio(service_key=...)`, `AsyncAirKoreaClient`
-- 좌표 입력: WGS84 public 경계는 `PlaceCoordinate(lat=..., lon=...)`, AirKorea TM은 `TmPoint(tm_x, tm_y)`
+- 좌표 입력: WGS84 public 경계는 `LatLon(lat=..., lon=...)`, AirKorea TM은 `TmPoint(tm_x, tm_y)`
 - GeoJSON/WKT/GIS 출력 경계에서만 표준에 맞춰 `(lon, lat)` 순서로 변환
 - 기존 `LatLon(lat, lon)`, `(lat, lon)`, mapping, `lat=...`, `lon=...` 호출은 호환 유지
 - 기존 문자열 입력은 호환 유지

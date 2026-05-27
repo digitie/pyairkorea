@@ -66,8 +66,8 @@
 
 - WGS84는 항상 `lat, lon` 순서다
 - AirKorea TM은 항상 `tm_x, tm_y` 순서다
-- 외부 GIS/TripMate 계열 타입과 맞추기 위해 public 좌표 경계에는 `PlaceCoordinate(lat=..., lon=...)`를 권장한다
-- 규칙: `PlaceCoordinate` 공개 DTO는 `(lat, lon)`, AirKorea TM은 `(tm_x, tm_y)`, GeoJSON/WKT/GIS 출력은 해당 표준의 `(lon, lat)`로 분리한다
+- public 좌표 경계에는 이 라이브러리의 `LatLon(lat=..., lon=...)`을 사용한다
+- 규칙: `LatLon` 공개 DTO는 `(lat, lon)`, AirKorea TM은 `(tm_x, tm_y)`, GeoJSON/WKT/GIS 출력은 해당 표준의 `(lon, lat)`로 분리한다
 
 ## 12. 로컬 도구/인코딩 문제를 코드 문제로 착각하지 말 것
 
