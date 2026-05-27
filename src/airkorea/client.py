@@ -7,8 +7,6 @@ from collections.abc import AsyncIterator, Iterator, Mapping
 from datetime import date
 from typing import Any
 
-from kraddr.base import PlaceCoordinate
-
 from airkorea._convert import (
     parse_data_time,
     strip_or_none,
@@ -351,9 +349,7 @@ class AirKoreaClient:
     def nearby_stations(
         self,
         *,
-        coordinate: (
-            PlaceCoordinate | LatLon | tuple[float, float] | Mapping[str, Any] | None
-        ) = None,
+        coordinate: LatLon | tuple[float, float] | Mapping[str, Any] | None = None,
         tm: TmPoint | tuple[float, float] | Mapping[str, Any] | None = None,
         tm_x: float | None = None,
         tm_y: float | None = None,
@@ -403,9 +399,7 @@ class AirKoreaClient:
     def measurement_near(
         self,
         *,
-        coordinate: (
-            PlaceCoordinate | LatLon | tuple[float, float] | Mapping[str, Any] | None
-        ) = None,
+        coordinate: LatLon | tuple[float, float] | Mapping[str, Any] | None = None,
         lat: float | None = None,
         lon: float | None = None,
         data_term: str | DataTerm = DataTerm.DAILY,
@@ -1031,9 +1025,7 @@ class AsyncAirKoreaClient:
     async def nearby_stations(
         self,
         *,
-        coordinate: (
-            PlaceCoordinate | LatLon | tuple[float, float] | Mapping[str, Any] | None
-        ) = None,
+        coordinate: LatLon | tuple[float, float] | Mapping[str, Any] | None = None,
         tm: TmPoint | tuple[float, float] | Mapping[str, Any] | None = None,
         tm_x: float | None = None,
         tm_y: float | None = None,
@@ -1083,9 +1075,7 @@ class AsyncAirKoreaClient:
     async def measurement_near(
         self,
         *,
-        coordinate: (
-            PlaceCoordinate | LatLon | tuple[float, float] | Mapping[str, Any] | None
-        ) = None,
+        coordinate: LatLon | tuple[float, float] | Mapping[str, Any] | None = None,
         lat: float | None = None,
         lon: float | None = None,
         data_term: str | DataTerm = DataTerm.DAILY,

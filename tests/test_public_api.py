@@ -12,7 +12,6 @@ def test_package_all_contains_recommended_public_api() -> None:
         "AirKoreaPage",
         "AsyncAirKoreaClient",
         "RawRecord",
-        "PlaceCoordinate",
         "PROVIDER_NAME",
         "LatLon",
         "TmPoint",

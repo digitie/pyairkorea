@@ -61,13 +61,13 @@ async with AirKoreaClient.aio() as air:
     rows = await air.station_measurements("종로구", num_of_rows=1)
 ```
 
-좌표는 `kraddr.base`의 `PlaceCoordinate`를 권장합니다. 기존 `LatLon`, tuple,
-mapping, `lat=..., lon=...` 호출도 계속 지원합니다.
+좌표는 이 라이브러리의 `LatLon`을 사용합니다. tuple, mapping,
+`lat=..., lon=...` 호출도 지원합니다.
 
 ```python
-from airkorea import PlaceCoordinate
+from airkorea import LatLon
 
-seoul_city_hall = PlaceCoordinate(lat=37.5665, lon=126.9780)
+seoul_city_hall = LatLon(lat=37.5665, lon=126.9780)
 nearby = air.nearby_stations(coordinate=seoul_city_hall)
 measurement = air.measurement_near(coordinate=seoul_city_hall)
 ```
@@ -82,7 +82,7 @@ measurement = air.measurement_near(coordinate=seoul_city_hall)
 | 시도명 | `SidoName` |
 | 통계 단위 | `StatsDataGubun`, `StatsSearchCondition` |
 | 대기질 등급 | `AirQualityGrade` |
-| 위경도 | `PlaceCoordinate` |
+| 위경도 | `LatLon` |
 | AirKorea TM 좌표 | `TmPoint` |
 
 enum은 `str` 기반이라 기존 문자열 코드와 잘 섞입니다.
@@ -102,7 +102,7 @@ alarms = air.dust_alarms(2026, item_code=Pollutant.PM10)
 
 ```python
 station = air.stations(station_name="종로구")[0]
-print(station.coordinates)        # PlaceCoordinate(...) or None
+print(station.coordinates)        # LatLon(...) or None
 print(latest.khai_grade_enum)     # AirQualityGrade.MODERATE or None
 print(latest.model_dump())        # Pydantic dict
 ```
