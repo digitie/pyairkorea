@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest *)",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git fetch *)",
+      "Bash(git pull *)",
+      "Bash(git merge *)",
+      "Bash(gh pr *)",
+      "Bash(git branch *)",
+      "Bash(git push *)",
+      "PowerShell(python -m pytest)",
+      "PowerShell(python -m pytest --cov=airkorea --cov-fail-under=90)",
+      "PowerShell(python -m ruff check .)",
+      "PowerShell(python -m mypy src/airkorea)",
+      "PowerShell(python -m compileall src/airkorea tests)",
+      "PowerShell(git fetch origin)",
+      "PowerShell(git rev-list --left-right --count main...origin/main)",
+      "PowerShell(git checkout -b *)"
+    ]
+  }
+}
