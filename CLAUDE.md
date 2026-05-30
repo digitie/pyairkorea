@@ -32,7 +32,7 @@
 
 ## 에이전트 worktree + CodeGraph
 
-ChatGPT Codex는 `F:\dev\ak-codex`, Claude Code는 `F:\dev\ak-claude`, Google Antigravity는 `F:\dev\ak-antigravity`를 고정 worktree로 사용한다. 새 작업은 해당 worktree에서 `git fetch` 후 `git switch -c agent/<topic> main`으로 브랜치를 딴다.
+ChatGPT Codex는 `F:\dev\python-airkorea-api-codex`, Claude Code는 `F:\dev\python-airkorea-api-claude`, Google Antigravity는 `F:\dev\python-airkorea-api-antigravity`를 고정 worktree로 사용한다. 새 작업은 해당 worktree에서 `git fetch` 후 `git switch -c agent/<topic> main`으로 브랜치를 딴다.
 CodeGraph는 각 에이전트 worktree에서 `codegraph init -i`로 1회 초기화한 뒤 `codegraph sync`로 인덱스를 동기화한다.
 
 ---
