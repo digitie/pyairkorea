@@ -57,6 +57,7 @@
 ## 문서 라우팅
 
 - 사용자용 개요와 예시: `README.md`
+- 에이전트용 빠른 세션 연속성 컨텍스트: `CLAUDE.md`
 - 공식 API 목록, endpoint, Python 메서드 매핑: `airkorea-api.md`
 - 라이브러리 표면, enum, 좌표, raw page 사용법: `docs/library-surface.md`
 - 구현 상태와 테스트 매트릭스: `docs/implementation-status.md`
@@ -64,9 +65,19 @@
 - 테스트 원칙과 live test 방침: `docs/testing.md`
 - 반복 실수 방지 로그: `docs/repeated-mistakes.md`
 - 오류별 점검표: `docs/troubleshooting.md`
+- 아키텍처 결정 레코드(ADR): `docs/decisions.md`
+- 작업 일지 히스토리: `docs/journal.md`
+- 태스크 백로그 관리: `docs/tasks.md`
+- 연속성 재개 상태 가이드: `docs/resume.md`
 - 구현 불변조건과 완료 전 확인: `SKILL.md`
 - 기여 절차: `CONTRIBUTING.md`
 - 패키징, 의존성, lint/test 설정: `pyproject.toml`
+
+## 에이전트 worktree + CodeGraph
+
+- ChatGPT Codex는 `F:\dev\ak-codex`, Claude Code는 `F:\dev\ak-claude`, Google Antigravity는 `F:\dev\ak-antigravity`를 고정 worktree로 사용합니다.
+- 새 작업 시작 전에는 항상 리모트 최신 변경을 fetch하여 switch 한 뒤 작업을 진행합니다.
+- 각 에이전트 worktree별로 1회 `codegraph init -i`를 통해 초기화하고, 작업 중에는 `codegraph sync`를 호출하여 인덱스를 최신화합니다. `.codegraph/`는 git에서 무시됩니다.
 
 ## 모듈 지도
 
