@@ -54,17 +54,17 @@ from airkorea.models import (
 )
 from airkorea.pagination import aiter_paginated_pages, iter_paginated_pages
 
-DEFAULT_POLLUTION_BASE_URL = "http://apis.data.go.kr/B552584/ArpltnInforInqireSvc"
-DEFAULT_STATION_BASE_URL = "http://apis.data.go.kr/B552584/MsrstnInfoInqireSvc"
-DEFAULT_STATS_BASE_URL = "http://apis.data.go.kr/B552584/ArpltnStatsSvc"
-DEFAULT_OCCURRENCE_BASE_URL = "http://apis.data.go.kr/B552584/OzYlwsndOccrrncInforInqireSvc"
-DEFAULT_ALARM_BASE_URL = "http://apis.data.go.kr/B552584/UlfptcaAlarmInqireSvc"
-DEFAULT_USER_SUPPORT_BASE_URL = "http://apis.data.go.kr/B552584/UserSportSvc"
-DEFAULT_HIGH_PM25_FORECAST_BASE_URL = "http://apis.data.go.kr/B552584/MinuDustFrcstDspthSvc"
-DEFAULT_CAI_BASE_URL = "http://apis.data.go.kr/B552584/RltmKhaiInfoSvc"
-DEFAULT_BACKGROUND_BASE_URL = "http://apis.data.go.kr/B552584/arpltsNtnBkgrDnstSyrdt"
-DEFAULT_ENGLISH_MEASUREMENT_BASE_URL = "http://apis.data.go.kr/B552584/atmstMsrstnRltmInfo"
-DEFAULT_ENGLISH_STATION_BASE_URL = "http://apis.data.go.kr/B552584/atmstMsrstnInfoEngNm"
+DEFAULT_POLLUTION_BASE_URL = "https://apis.data.go.kr/B552584/ArpltnInforInqireSvc"
+DEFAULT_STATION_BASE_URL = "https://apis.data.go.kr/B552584/MsrstnInfoInqireSvc"
+DEFAULT_STATS_BASE_URL = "https://apis.data.go.kr/B552584/ArpltnStatsSvc"
+DEFAULT_OCCURRENCE_BASE_URL = "https://apis.data.go.kr/B552584/OzYlwsndOccrrncInforInqireSvc"
+DEFAULT_ALARM_BASE_URL = "https://apis.data.go.kr/B552584/UlfptcaAlarmInqireSvc"
+DEFAULT_USER_SUPPORT_BASE_URL = "https://apis.data.go.kr/B552584/UserSportSvc"
+DEFAULT_HIGH_PM25_FORECAST_BASE_URL = "https://apis.data.go.kr/B552584/MinuDustFrcstDspthSvc"
+DEFAULT_CAI_BASE_URL = "https://apis.data.go.kr/B552584/RltmKhaiInfoSvc"
+DEFAULT_BACKGROUND_BASE_URL = "https://apis.data.go.kr/B552584/arpltsNtnBkgrDnstSyrdt"
+DEFAULT_ENGLISH_MEASUREMENT_BASE_URL = "https://apis.data.go.kr/B552584/atmstMsrstnRltmInfo"
+DEFAULT_ENGLISH_STATION_BASE_URL = "https://apis.data.go.kr/B552584/atmstMsrstnInfoEngNm"
 
 SUPPORTED_ENDPOINTS = {
     "ArpltnInforInqireSvc": (
