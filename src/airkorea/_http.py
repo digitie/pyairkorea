@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+import random
+import urllib.parse
+from collections import deque
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Protocol, cast
@@ -44,6 +47,9 @@ class AsyncSessionLike(Protocol):
 
 TRANSIENT_STATUSES = {500, 502, 503, 504}
 
+_MAX_EXCHANGES = 1000
+_MAX_RETRY_BACKOFF_SECONDS = 10.0
+
 
 @dataclass(frozen=True)
 class HttpExchange:
@@ -80,7 +86,7 @@ class HttpClient:
         self._timeout = timeout
         self._retries = max(0, retries)
         self._retry_backoff = max(0.0, retry_backoff)
-        self._exchanges: list[HttpExchange] = []
+        self._exchanges: deque[HttpExchange] = deque(maxlen=_MAX_EXCHANGES)
 
     def __enter__(self) -> HttpClient:
         return self
@@ -156,7 +162,7 @@ class HttpClient:
             raise AirKoreaParseError("JSON response root is not an object")
 
         try:
-            body = _extract_body(payload)
+            body = _extract_body(payload, self._service_key)
         except Exception:
             self._record_exchange(
                 url=url,
@@ -185,12 +191,12 @@ class HttpClient:
                 if attempt < self._retries:
                     self._sleep_before_retry(attempt)
                     continue
-                raise AirKoreaNetworkError(str(exc)) from exc
+                raise AirKoreaNetworkError(str(exc)) from None
 
             if response.status_code in TRANSIENT_STATUSES and attempt < self._retries:
                 self._sleep_before_retry(attempt)
                 continue
-            _raise_for_status(response)
+            _raise_for_status(response, self._service_key)
             return response
 
         raise AirKoreaNetworkError(str(last_error) if last_error else "request failed")
@@ -217,7 +223,8 @@ class HttpClient:
             return
         import time
 
-        time.sleep(self._retry_backoff * (2**attempt))
+        delay = min(self._retry_backoff * (2**attempt), _MAX_RETRY_BACKOFF_SECONDS)
+        time.sleep(delay * random.uniform(0.5, 1.5))
 
     def _record_exchange(
         self,
@@ -264,7 +271,7 @@ class AsyncHttpClient:
         self._timeout = timeout
         self._retries = max(0, retries)
         self._retry_backoff = max(0.0, retry_backoff)
-        self._exchanges: list[HttpExchange] = []
+        self._exchanges: deque[HttpExchange] = deque(maxlen=_MAX_EXCHANGES)
 
     async def __aenter__(self) -> AsyncHttpClient:
         return self
@@ -340,7 +347,7 @@ class AsyncHttpClient:
             raise AirKoreaParseError("JSON response root is not an object")
 
         try:
-            body = _extract_body(payload)
+            body = _extract_body(payload, self._service_key)
         except Exception:
             self._record_exchange(
                 url=url,
@@ -373,12 +380,12 @@ class AsyncHttpClient:
                 if attempt < self._retries:
                     await self._sleep_before_retry(attempt)
                     continue
-                raise AirKoreaNetworkError(str(exc)) from exc
+                raise AirKoreaNetworkError(str(exc)) from None
 
             if response.status_code in TRANSIENT_STATUSES and attempt < self._retries:
                 await self._sleep_before_retry(attempt)
                 continue
-            _raise_for_status(response)
+            _raise_for_status(response, self._service_key)
             return response
 
         raise AirKoreaNetworkError(str(last_error) if last_error else "request failed")
@@ -403,7 +410,8 @@ class AsyncHttpClient:
     async def _sleep_before_retry(self, attempt: int) -> None:
         if self._retry_backoff <= 0:
             return
-        await asyncio.sleep(self._retry_backoff * (2**attempt))
+        delay = min(self._retry_backoff * (2**attempt), _MAX_RETRY_BACKOFF_SECONDS)
+        await asyncio.sleep(delay * random.uniform(0.5, 1.5))
 
     def _record_exchange(
         self,
@@ -436,9 +444,19 @@ def _response_headers(response: ResponseLike) -> dict[str, str]:
     return {str(key): str(value) for key, value in headers.items()}
 
 
-def _raise_for_status(response: ResponseLike) -> None:
+def _scrub_service_key(text: str, service_key: str) -> str:
+    if not service_key:
+        return text
+    scrubbed = text.replace(service_key, "<REDACTED>")
+    encoded = urllib.parse.quote(service_key, safe="")
+    if encoded != service_key:
+        scrubbed = scrubbed.replace(encoded, "<REDACTED>")
+    return scrubbed
+
+
+def _raise_for_status(response: ResponseLike, service_key: str) -> None:
     status = response.status_code
-    text = response.text[:300]
+    text = _scrub_service_key(response.text, service_key)[:300]
     if status in {401, 403}:
         raise AirKoreaAuthError(f"HTTP {status}: {text}")
     if status == 429:
@@ -452,13 +470,42 @@ def _raise_for_status(response: ResponseLike) -> None:
 def _raise_for_plain_text(text: str) -> None:
     upper = text.upper()
     preview = text[:300]
-    if "SERVICE_KEY" in upper or "SERVICE KEY" in upper:
+    auth_markers = (
+        "SERVICE_KEY",
+        "SERVICE KEY",
+        "SERVICEKEY",
+        "UNREGISTERED_IP_ERROR",
+        "SERVICE_ACCESS_DENIED_ERROR",
+        "UNSIGNED_CALL_ERROR",
+    )
+    if any(marker in upper for marker in auth_markers):
         raise AirKoreaAuthError(preview)
     if "LIMIT" in upper or "LIMITED" in upper or "초과" in text:
         raise AirKoreaRateLimitError(preview)
 
 
-def _extract_body(payload: Mapping[str, Any]) -> Mapping[str, Any]:
+def _find_fault_header(payload: Mapping[str, Any]) -> Mapping[str, Any] | None:
+    header = payload.get("cmmMsgHeader")
+    if isinstance(header, Mapping):
+        return header
+    service_response = payload.get("OpenAPI_ServiceResponse")
+    if isinstance(service_response, Mapping):
+        header = service_response.get("cmmMsgHeader")
+        if isinstance(header, Mapping):
+            return header
+    return None
+
+
+def _extract_body(payload: Mapping[str, Any], service_key: str) -> Mapping[str, Any]:
+    fault_header = _find_fault_header(payload)
+    if fault_header is not None:
+        fault_code = str(fault_header.get("returnReasonCode", "")).strip()
+        if fault_code and fault_code != "00":
+            fault_message = str(
+                fault_header.get("returnAuthMsg") or fault_header.get("errMsg", "")
+            ).strip()
+            _raise_for_result_code(fault_code, fault_message, service_key)
+
     response = payload.get("response")
     if not isinstance(response, Mapping):
         raise AirKoreaParseError("response object is missing")
@@ -469,7 +516,7 @@ def _extract_body(payload: Mapping[str, Any]) -> Mapping[str, Any]:
     code = str(header.get("resultCode", "")).strip()
     message = str(header.get("resultMsg", "")).strip()
     if code != "00":
-        _raise_for_result_code(code, message)
+        _raise_for_result_code(code, message, service_key)
 
     body = response.get("body", {})
     if not isinstance(body, Mapping):
@@ -477,8 +524,8 @@ def _extract_body(payload: Mapping[str, Any]) -> Mapping[str, Any]:
     return body
 
 
-def _raise_for_result_code(code: str, message: str) -> None:
-    text = f"AirKorea API returned {code}: {message}"
+def _raise_for_result_code(code: str, message: str, service_key: str) -> None:
+    text = _scrub_service_key(f"AirKorea API returned {code}: {message}", service_key)
     upper = message.upper()
     if code in {"20", "30", "31"} or "SERVICE_KEY" in upper:
         raise AirKoreaAuthError(text)

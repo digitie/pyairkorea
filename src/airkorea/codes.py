@@ -28,6 +28,11 @@ class AirQualityGrade(IntEnum):
 
     @classmethod
     def from_code(cls, value: Any) -> AirQualityGrade | None:
+        if isinstance(value, int):
+            try:
+                return cls(value)
+            except ValueError:
+                return None
         try:
             return cls(int(str(value).strip()))
         except (TypeError, ValueError):

@@ -15,8 +15,14 @@ class AirKoreaRequestError(AirKoreaError):
     """요청 파라미터가 올바르지 않거나 API가 요청을 거절했습니다."""
 
 
-class AirKoreaNoDataError(AirKoreaRequestError):
-    """API가 데이터 없음 결과 코드를 반환했습니다."""
+class AirKoreaNoDataError(AirKoreaError):
+    """API가 데이터 없음 결과 코드(resultCode=03)를 반환했습니다.
+
+    요청 자체는 유효하며 단순히 일치하는 결과가 없다는 뜻이므로
+    `AirKoreaRequestError`(잘못된 요청)의 하위 클래스가 아닙니다.
+    일부 엔드포인트/상황은 동일한 '결과 없음'을 예외 대신 빈 list로
+    반환하므로, 호출부는 두 경우를 모두 처리해야 합니다.
+    """
 
 
 class AirKoreaRateLimitError(AirKoreaRequestError):

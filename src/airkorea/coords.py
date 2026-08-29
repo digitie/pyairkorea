@@ -9,6 +9,7 @@ from typing import Any
 
 DEFAULT_AIRKOREA_TM_CRS = "EPSG:2097"
 WGS84_CRS = "EPSG:4326"
+_ALLOWED_CRS = frozenset({DEFAULT_AIRKOREA_TM_CRS, WGS84_CRS})
 
 
 @dataclass(frozen=True)
@@ -191,6 +192,8 @@ def _mapping_float(mapping: Mapping[str, Any], *keys: str) -> float:
 
 @lru_cache(maxsize=16)
 def _transformer(source_crs: str, target_crs: str):  # type: ignore[no-untyped-def]
+    if source_crs not in _ALLOWED_CRS or target_crs not in _ALLOWED_CRS:
+        raise ValueError(f"CRS must be one of {sorted(_ALLOWED_CRS)}")
     try:
         from pyproj import Transformer
     except ModuleNotFoundError as exc:  # pragma: no cover - 패키지 필수 의존성

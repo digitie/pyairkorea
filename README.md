@@ -32,7 +32,7 @@ PowerShell:
 $env:DATA_GO_KR_SERVICE_KEY="발급받은_인증키"
 ```
 
-`AirKoreaClient()`는 `python-krheritage-api`와 같은 facade 형태로 서비스키를 키워드 인자로 받습니다. `service_key`를 생략하면 `AIRKOREA_SERVICE_KEY` 환경변수와 현재 작업 디렉터리의 `.env`를 순서대로 확인합니다.
+`AirKoreaClient()`는 `python-krheritage-api`와 같은 facade 형태로 서비스키를 키워드 인자로 받습니다. `service_key`를 생략하면 `DATA_GO_KR_SERVICE_KEY` 환경변수와 현재 작업 디렉터리의 `.env`를 순서대로 확인합니다.
 
 ```dotenv
 DATA_GO_KR_SERVICE_KEY=발급받은_인증키

@@ -31,6 +31,12 @@ class FakeClient:
     def __init__(self, service_key: str | None = None) -> None:
         FakeClient.last_init_key = service_key
 
+    def __enter__(self) -> FakeClient:
+        return self
+
+    def __exit__(self, *args: Any) -> None:
+        return None
+
     @classmethod
     def from_env(cls) -> FakeClient:
         cls.last_from_env_called = True
