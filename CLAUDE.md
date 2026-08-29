@@ -11,7 +11,7 @@
 
 ### 현재 작업
 
-- maplibre-vworld-js 스타일 이식 및 MCP 설정 구성 (`chore/adopt-vworld-agent-style` 브랜치)
+- (없음 — 마지막 작업이었던 maplibre-vworld-js 스타일 이식 및 MCP 설정 구성은 PR #2로 병합 완료됨)
 
 ### 잔존 기술 부채
 
@@ -19,8 +19,7 @@
 
 ### 브랜치 정리
 
-- `codex/remove-kraddr-base-clean` — 리모트 정리 대상
-- `codex/wsl-kraddr-debug-ui-docs` — 리모트 정리 대상
+- `codex/wsl-kraddr-debug-ui-docs` — 리모트 정리 대상 (아직 main에 미병합)
 
 ### 후속 백로그
 
@@ -28,12 +27,7 @@
 - T-002: `@pytest.mark.integration` 통합 테스트 커버리지 확대
 - T-003: 캐싱 데코레이터 또는 메모리 캐시 미들웨어 추가 검토
 
----
-
-## 에이전트 worktree + CodeGraph
-
-ChatGPT Codex는 `F:\dev\python-airkorea-api-codex`, Claude Code는 `F:\dev\python-airkorea-api-claude`, Google Antigravity는 `F:\dev\python-airkorea-api-antigravity`를 고정 worktree로 사용한다. 새 작업은 해당 worktree에서 `git fetch` 후 `git switch -c agent/<topic> main`으로 브랜치를 딴다.
-CodeGraph는 각 에이전트 worktree에서 `codegraph init -i`로 1회 초기화한 뒤 `codegraph sync`로 인덱스를 동기화한다.
+에이전트 worktree와 CodeGraph 설정은 `AGENTS.md`를 정본으로 본다.
 
 ---
 

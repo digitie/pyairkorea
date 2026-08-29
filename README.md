@@ -1,8 +1,38 @@
 # python-airkorea-api
 
+![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)
+![GPL-3.0-or-later 라이선스](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)
+![Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)
+
 한국환경공단 AirKorea OpenAPI를 Python에서 쓰기 쉽게 감싼 비공식 클라이언트입니다.
 
 `python-airkorea-api`는 공공데이터포털의 AirKorea 계열 B552584 OpenAPI를 Pydantic v2 기반 Python 객체로 변환합니다. Python import 이름은 `airkorea`입니다. 외부 프로그램에서 안정적으로 붙일 수 있도록 문자열 입력은 계속 지원하면서 enum, 좌표 값 객체, 표준화 helper를 제공합니다.
+
+## 제공 표면
+
+| 표면 | 진입점 | 설명 |
+|---|---|---|
+| Python 라이브러리 | `from airkorea import AirKoreaClient` | 동기/비동기 하이브리드 클라이언트, enum, 좌표 값 객체, raw page 접근 |
+| CLI | `airkorea <command>` | 자주 쓰는 조회 중심 커맨드라인 도구, 라이브러리와 함께 설치됨 |
+
+## 먼저 읽을 문서
+
+README는 빠른 시작 안내만 다룹니다. 세부 내용은 아래 문서를 정본으로 봅니다.
+
+| 필요 정보 | 문서 |
+|---|---|
+| 공식 API 목록, endpoint, 메서드 매핑 | [airkorea-api.md](airkorea-api.md) |
+| 외부 프로그램 연동용 타입/좌표 지침 | [docs/library-surface.md](docs/library-surface.md) |
+| 디버그 UI fixture 저장과 replay 테스트 구조 | [docs/debug-fixtures.md](docs/debug-fixtures.md) |
+| 구현/테스트 현황 | [docs/implementation-status.md](docs/implementation-status.md) |
+| 문서와 Python 내부 문서 작성 규칙 | [docs/documentation-style.md](docs/documentation-style.md) |
+| 테스트 원칙과 live test 방침 | [docs/testing.md](docs/testing.md) |
+| 반복 실수 방지 로그 | [docs/repeated-mistakes.md](docs/repeated-mistakes.md) |
+| 오류별 점검표 | [docs/troubleshooting.md](docs/troubleshooting.md) |
+| 아키텍처 결정 기록(ADR) | [docs/decisions.md](docs/decisions.md) |
+| 작업 일지 히스토리 | [docs/journal.md](docs/journal.md) |
+| 작업 재개 연속성 가이드 | [docs/resume.md](docs/resume.md) |
+| 태스크 백로그 | [docs/tasks.md](docs/tasks.md) |
 
 ## 설치
 
@@ -226,17 +256,10 @@ python -m mypy src/airkorea
 
 실제 API 호출 테스트는 기본 테스트에 넣지 않습니다. 네트워크, 인증키, 실시간 데이터 상태가 흔들리기 때문입니다.
 
-## 문서
-
-- [airkorea-api.md](airkorea-api.md): 공식 API 목록, endpoint, 메서드 매핑
-- [docs/library-surface.md](docs/library-surface.md): 외부 프로그램 연동용 타입/좌표 지침
-- [docs/debug-fixtures.md](docs/debug-fixtures.md): 디버그 UI fixture 저장과 replay 테스트 구조
-- [docs/implementation-status.md](docs/implementation-status.md): 구현/테스트 현황
-- [docs/documentation-style.md](docs/documentation-style.md): 문서와 Python 내부 문서 작성 규칙
-- [docs/testing.md](docs/testing.md): 테스트 원칙
-- [docs/repeated-mistakes.md](docs/repeated-mistakes.md): 반복 실수 방지 로그
-- [docs/troubleshooting.md](docs/troubleshooting.md): 오류별 점검표
-
 ## 범위
 
 이 패키지는 AirKorea 대기질 API 클라이언트입니다. 한국환경공단의 모든 B552584 서비스(비점오염원, 재활용, 냉매 등)를 포함하지 않습니다.
+
+## 법적 고지
+
+GPL-3.0-or-later 라이선스는 이 저장소에 포함된 소스 코드와 문서에만 적용됩니다. 자세한 조건은 [LICENSE](LICENSE)를 확인하십시오. 한국환경공단 AirKorea OpenAPI와 공공데이터포털이 제공하는 원본 데이터는 각 제공 기관의 이용약관, 저작권, 재배포 조건을 따르며 이 저장소의 라이선스와는 별개입니다. 이 패키지는 AirKorea API 호출을 돕는 기술 도구이며, 대기질 데이터의 정확성이나 법적 효력을 보장하지 않습니다.

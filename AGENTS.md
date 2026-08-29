@@ -30,13 +30,9 @@
 - 런타임 의존성은 `pydantic`, `pyproj`, `httpx`입니다.
 - 기본 테스트는 실제 AirKorea 네트워크 호출 없이 fixture/fake session으로 동작해야 합니다.
 
-## Provider API 사용 원칙
+## 절대 하지 말 것 (DO NOT)
 
-- 외부 API 관련 작업은 다른 구현보다 먼저 wrapper/adapter/gateway 지양 원칙을 확인하고 문서/코드에 반영한 뒤 진행합니다.
-- downstream이 직접 사용할 안정된 public client, typed model, enum, helper를 제공합니다.
-- 단순 전달용 wrapper, 장기 호환 alias, 임시 facade를 만들지 않습니다.
-- TripMate나 `python-krtour-map`에서 필요한 endpoint, pagination, cursor, exception, raw payload 계약이 부족하면 이 저장소의 public API를 먼저 안정화합니다.
-- 다른 라이브러리에 검증된 구현이 있으면 wrapper로 감싸지 말고 라이선스와 출처를 확인한 뒤 현재 구조에 직접 반영합니다.
+- 외부 API를 감싸는 단순 전달용 wrapper, 장기 호환 alias, 임시 facade를 추가하지 않습니다. TripMate나 `python-krtour-map`이 필요로 하는 endpoint, pagination, cursor, exception, raw payload 계약이 부족하면 이 저장소의 public API를 직접 안정화하고, 다른 라이브러리에 검증된 구현이 있으면 wrapper로 감싸지 말고 라이선스와 출처를 확인한 뒤 현재 구조에 바로 반영합니다.
 
 ## 핵심 불변 조건
 
