@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import AsyncIterator, Iterator, Mapping
-from datetime import date
+from datetime import date, datetime
 from typing import Any
 
 from airkorea._convert import (
@@ -197,7 +197,7 @@ class AirKoreaClient:
     @classmethod
     def aio_from_env(
         cls,
-        name: str = "AIRKOREA_SERVICE_KEY",
+        name: str = "DATA_GO_KR_SERVICE_KEY",
         *,
         dotenv_path: str | os.PathLike[str] | None = ".env",
         **kwargs: Any,
@@ -410,8 +410,14 @@ class AirKoreaClient:
         stations = self.nearby_stations(coordinate=coordinate, lat=lat, lon=lon)
         if not stations:
             return None
+        nearest = min(
+            stations,
+            key=lambda station: (
+                station.distance_km if station.distance_km is not None else float("inf")
+            ),
+        )
         return self.latest_station_measurement(
-            stations[0].station_name,
+            nearest.station_name,
             data_term=data_term,
             ver=ver,
         )
@@ -872,7 +878,7 @@ class AsyncAirKoreaClient:
     @classmethod
     def from_env(
         cls,
-        name: str = "AIRKOREA_SERVICE_KEY",
+        name: str = "DATA_GO_KR_SERVICE_KEY",
         *,
         dotenv_path: str | os.PathLike[str] | None = ".env",
         **kwargs: Any,
@@ -1086,8 +1092,14 @@ class AsyncAirKoreaClient:
         stations = await self.nearby_stations(coordinate=coordinate, lat=lat, lon=lon)
         if not stations:
             return None
+        nearest = min(
+            stations,
+            key=lambda station: (
+                station.distance_km if station.distance_km is not None else float("inf")
+            ),
+        )
         return await self.latest_station_measurement(
-            stations[0].station_name,
+            nearest.station_name,
             data_term=data_term,
             ver=ver,
         )
@@ -1500,7 +1512,7 @@ class AsyncAirKoreaClient:
 def _resolve_service_key(service_key: str | None) -> str:
     resolved_service_key = service_key if service_key is not None else load_service_key()
     if resolved_service_key is None:
-        raise ValueError("AIRKOREA_SERVICE_KEY is not set")
+        raise ValueError("DATA_GO_KR_SERVICE_KEY is not set")
     return resolved_service_key
 
 
@@ -1527,17 +1539,20 @@ def _raw_page(
     request_params: Mapping[str, Any],
 ) -> AirKoreaPage[RawRecord]:
     items = tuple(_items(body))
-    page_no = _int_from_mapping(
-        body,
-        "pageNo",
-        default=_int_from_mapping(request_params, "pageNo", default=1),
-    )
+    page_no = _int_from_mapping(request_params, "pageNo", default=1)
     num_of_rows = _int_from_mapping(
         body,
         "numOfRows",
         default=_int_from_mapping(request_params, "numOfRows", default=len(items)),
     )
-    total_count = _int_from_mapping(body, "totalCount", default=len(items))
+    total_count = _int_from_mapping(body, "totalCount", default=-1)
+    if total_count < 0:
+        if num_of_rows > 0 and len(items) >= num_of_rows:
+            raise AirKoreaParseError(
+                "response.body.totalCount is missing or invalid for a full page; "
+                "cannot determine whether more pages exist"
+            )
+        total_count = len(items)
     return AirKoreaPage[RawRecord](
         items=items,
         total_count=total_count,
@@ -1961,5 +1976,5 @@ def _date_value(row: Mapping[str, Any], *keys: str) -> date | None:
     return to_date_or_none(_first(row, *keys))
 
 
-def _data_time(row: Mapping[str, Any], *keys: str) -> Any:
+def _data_time(row: Mapping[str, Any], *keys: str) -> datetime | None:
     return parse_data_time(_first(row, *keys))

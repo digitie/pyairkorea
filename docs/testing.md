@@ -42,12 +42,8 @@ fixture 형식과 Web UI 연동 방식은 `docs/debug-fixtures.md`에 정리합�
 실제 AirKorea 호출 테스트를 추가할 때는 다음 조건을 지킵니다.
 
 - `@pytest.mark.integration`을 붙인다.
-<<<<<<< HEAD
-- `AIRKOREA_SERVICE_KEY`가 없으면 skip한다.
-- 기본 테스트 경로에서 네트워크를 쓰지 않도록 live smoke test는 `AIRKOREA_RUN_LIVE=1`을 함께 요구한다.
-=======
 - `DATA_GO_KR_SERVICE_KEY`가 없으면 skip한다.
->>>>>>> 35b3544 (Use shared data.go.kr service key env)
+- 기본 테스트 경로에서 네트워크를 쓰지 않도록 live smoke test는 `AIRKOREA_RUN_LIVE=1`을 함께 요구한다.
 - 특정 농도값이나 문구를 고정 assert하지 않는다.
 - 응답이 비어 있을 수 있는 API는 empty list를 실패로 보지 않는다.
 - rate limit과 포털 장애를 고려해 CI 기본 경로에서는 실행하지 않는다.

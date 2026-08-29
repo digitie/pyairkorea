@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import asyncio
+import time
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterator, Mapping
 from typing import Any, TypeVar
 
+from airkorea.exceptions import AirKoreaNoDataError
 from airkorea.models import AirKoreaPage
 
 T = TypeVar("T")
@@ -36,6 +39,7 @@ def iter_paginated_pages(
     num_of_rows: int = 100,
     max_pages: int | None = None,
     max_items: int | None = None,
+    min_request_interval: float = 0.0,
 ) -> Iterator[AirKoreaPage[T]]:
     """페이지 메타데이터가 끝을 가리킬 때까지 AirKorea 페이지를 순회합니다."""
 
@@ -44,6 +48,7 @@ def iter_paginated_pages(
         num_of_rows=num_of_rows,
         max_pages=max_pages,
         max_items=max_items,
+        min_request_interval=min_request_interval,
     )
     current_page_no = page_no
     pages_seen = 0
@@ -55,7 +60,13 @@ def iter_paginated_pages(
         if max_items is not None and items_seen >= max_items:
             return
 
-        page = fetch_page(current_page_no, num_of_rows)
+        if pages_seen > 0 and min_request_interval > 0:
+            time.sleep(min_request_interval)
+
+        try:
+            page = fetch_page(current_page_no, num_of_rows)
+        except AirKoreaNoDataError:
+            return
         if page.is_empty:
             return
 
@@ -65,7 +76,7 @@ def iter_paginated_pages(
 
         if not page.has_next_page:
             return
-        current_page_no = page.next_page_no or current_page_no + 1
+        current_page_no += 1
 
 
 async def aiter_paginated_pages(
@@ -75,6 +86,7 @@ async def aiter_paginated_pages(
     num_of_rows: int = 100,
     max_pages: int | None = None,
     max_items: int | None = None,
+    min_request_interval: float = 0.0,
 ) -> AsyncIterator[AirKoreaPage[T]]:
     """페이지 메타데이터가 끝을 가리킬 때까지 AirKorea 페이지를 비동기로 순회합니다."""
 
@@ -83,6 +95,7 @@ async def aiter_paginated_pages(
         num_of_rows=num_of_rows,
         max_pages=max_pages,
         max_items=max_items,
+        min_request_interval=min_request_interval,
     )
     current_page_no = page_no
     pages_seen = 0
@@ -94,7 +107,13 @@ async def aiter_paginated_pages(
         if max_items is not None and items_seen >= max_items:
             return
 
-        page = await fetch_page(current_page_no, num_of_rows)
+        if pages_seen > 0 and min_request_interval > 0:
+            await asyncio.sleep(min_request_interval)
+
+        try:
+            page = await fetch_page(current_page_no, num_of_rows)
+        except AirKoreaNoDataError:
+            return
         if page.is_empty:
             return
 
@@ -104,7 +123,7 @@ async def aiter_paginated_pages(
 
         if not page.has_next_page:
             return
-        current_page_no = page.next_page_no or current_page_no + 1
+        current_page_no += 1
 
 
 def _validate_pagination_input(
@@ -113,6 +132,7 @@ def _validate_pagination_input(
     num_of_rows: int,
     max_pages: int | None,
     max_items: int | None,
+    min_request_interval: float = 0.0,
 ) -> None:
     if page_no < 1:
         raise ValueError("page_no must be >= 1")
@@ -122,6 +142,8 @@ def _validate_pagination_input(
         raise ValueError("max_pages must be >= 0")
     if max_items is not None and max_items < 0:
         raise ValueError("max_items must be >= 0")
+    if min_request_interval < 0:
+        raise ValueError("min_request_interval must be >= 0")
 
 
 def _int_from_body(body: Mapping[str, Any], key: str, *, default: int) -> int:

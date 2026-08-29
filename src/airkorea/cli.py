@@ -44,38 +44,37 @@ def main(argv: Sequence[str] | None = None) -> int:
     forecast_parser.add_argument("--inform-code")
 
     args = parser.parse_args(argv)
-    client = (
+    with (
         AirKoreaClient(service_key=args.service_key)
         if args.service_key
         else AirKoreaClient()
-    )
-
-    result: Any
-    if args.command == "station":
-        result = client.station_measurements(
-            args.station_name,
-            data_term=args.data_term,
-            num_of_rows=args.num_of_rows,
-        )
-    elif args.command == "sido":
-        result = client.sido_measurements(args.sido_name, num_of_rows=args.num_of_rows)
-    elif args.command == "stations":
-        result = client.stations(
-            addr=args.addr,
-            station_name=args.station_name,
-            num_of_rows=args.num_of_rows,
-        )
-    elif args.command == "nearby":
-        location = _location_kwargs(args)
-        if "lat" in location:
-            result = client.nearby_stations(lat=location["lat"], lon=location["lon"])
+    ) as client:
+        result: Any
+        if args.command == "station":
+            result = client.station_measurements(
+                args.station_name,
+                data_term=args.data_term,
+                num_of_rows=args.num_of_rows,
+            )
+        elif args.command == "sido":
+            result = client.sido_measurements(args.sido_name, num_of_rows=args.num_of_rows)
+        elif args.command == "stations":
+            result = client.stations(
+                addr=args.addr,
+                station_name=args.station_name,
+                num_of_rows=args.num_of_rows,
+            )
+        elif args.command == "nearby":
+            location = _location_kwargs(args)
+            if "lat" in location:
+                result = client.nearby_stations(lat=location["lat"], lon=location["lon"])
+            else:
+                result = client.nearby_stations(tm_x=location["tm_x"], tm_y=location["tm_y"])
         else:
-            result = client.nearby_stations(tm_x=location["tm_x"], tm_y=location["tm_y"])
-    else:
-        result = client.forecast_notices(
-            search_date=args.search_date,
-            inform_code=args.inform_code,
-        )
+            result = client.forecast_notices(
+                search_date=args.search_date,
+                inform_code=args.inform_code,
+            )
 
     print(json.dumps(_jsonable(result), ensure_ascii=False, indent=2))
     return 0

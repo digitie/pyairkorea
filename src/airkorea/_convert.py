@@ -59,10 +59,24 @@ def parse_data_time(value: Any) -> datetime | None:
         return None
     normalized = text.replace("시 발표", ":00").replace("시", ":00")
     for fmt in ("%Y-%m-%d %H:%M", "%Y-%m-%d %H%M", "%Y%m%d%H%M"):
+        candidate = normalized
+        extra_day = False
+        if fmt == "%Y-%m-%d %H:%M" and candidate.endswith(" 24:00"):
+            candidate = candidate[:-6] + " 00:00"
+            extra_day = True
+        elif fmt == "%Y-%m-%d %H%M" and candidate.endswith(" 2400"):
+            candidate = candidate[:-5] + " 0000"
+            extra_day = True
+        elif fmt == "%Y%m%d%H%M" and len(candidate) == 12 and candidate.endswith("2400"):
+            candidate = candidate[:-4] + "0000"
+            extra_day = True
         try:
-            return datetime.strptime(normalized, fmt).replace(tzinfo=KST)
+            parsed = datetime.strptime(candidate, fmt)
         except ValueError:
             continue
+        if extra_day:
+            parsed += timedelta(days=1)
+        return parsed.replace(tzinfo=KST)
     if len(normalized) == 10:
         try:
             return datetime.strptime(normalized, "%Y-%m-%d").replace(tzinfo=KST)
