@@ -38,6 +38,10 @@ dev = [
   "pytest-cov>=5",
   "ruff>=0.5",
 ]
+debug-ui = [
+  "pandas>=2",
+  "streamlit>=1.36",
+]
 
 [project.scripts]
 airkorea = "airkorea.cli:main"

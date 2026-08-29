@@ -2,10 +2,12 @@
 
 from airkorea.catalog import (
     ApiCatalogEntry,
+    ParamSpec,
     api_catalog,
     api_catalog_dicts,
     api_catalog_for_debug_input,
     api_catalog_for_method,
+    api_catalog_params_for_method,
     get_api_catalog_entry,
 )
 from airkorea.client import SUPPORTED_ENDPOINTS, AirKoreaClient, AsyncAirKoreaClient
@@ -33,6 +35,7 @@ from airkorea.debug import (
     DEBUGGABLE_METHODS,
     DEFAULT_ASSERTION,
     DebugRun,
+    build_error,
     jsonable,
     load_debug_fixture,
     redact_sensitive,
@@ -124,6 +127,7 @@ __all__ = [
     "LatLon",
     "LatLonLike",
     "NearbyStation",
+    "ParamSpec",
     "Pollutant",
     "PROVIDER_NAME",
     "RawRecord",
@@ -142,7 +146,9 @@ __all__ = [
     "api_catalog_dicts",
     "api_catalog_for_debug_input",
     "api_catalog_for_method",
+    "api_catalog_params_for_method",
     "aiter_paginated_pages",
+    "build_error",
     "coerce_latlon",
     "coerce_tm_point",
     "get_api_catalog_entry",

@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import json
 import re
+import time
 import traceback
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass, is_dataclass
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel
@@ -17,7 +18,9 @@ from pydantic import BaseModel
 from airkorea._http import HttpExchange
 from airkorea.catalog import api_catalog_for_debug_input
 from airkorea.client import AirKoreaClient
+from airkorea.exceptions import AirKoreaError
 from airkorea.metadata import is_credential_param
+from airkorea.models import AirKoreaPage
 
 SENSITIVE_KEYS = {
     "authorization",
@@ -66,6 +69,20 @@ DEFAULT_ASSERTION = {
     "required_fields": [],
 }
 
+# airkorea 자체 예외 타입을 오류 dict의 provider별 필드로 매핑합니다.
+_FAILURE_KIND_BY_EXCEPTION = {
+    "AirKoreaAuthError": "auth",
+    "AirKoreaRequestError": "request",
+    "AirKoreaNoDataError": "no_data",
+    "AirKoreaRateLimitError": "rate_limit",
+    "AirKoreaNetworkError": "network",
+    "AirKoreaServerError": "server",
+    "AirKoreaParseError": "parse",
+}
+_RETRYABLE_FAILURE_KINDS = {"network", "server", "rate_limit"}
+_STATUS_CODE_PATTERN = re.compile(r"HTTP (\d{3})")
+_RESULT_CODE_PATTERN = re.compile(r"returned (\w+):")
+
 
 @dataclass(frozen=True)
 class DebugRun:
@@ -98,23 +115,24 @@ def run_debug_method(
     parsed: Any = None
     processed: Any = None
     error: Mapping[str, Any] | None = None
-    trace: list[str] = []
     catalog = _catalog_for_debug_run(function_name, input_data or {})
 
+    start_time = time.perf_counter()
     try:
         method = getattr(client, function_name)
         parsed = method(**dict(input_data or {}))
-        processed = parsed
+        # AirKoreaPage(raw call() 결과)는 item 목록을 "processed"로 펴서
+        # Processed Result 탭이 pandas 표로 보여줄 수 있게 합니다.
+        processed = list(parsed.items) if isinstance(parsed, AirKoreaPage) else parsed
     except Exception as exc:
-        error = {
-            "type": type(exc).__name__,
-            "message": str(exc),
-        }
-        formatted = traceback.format_exception(type(exc), exc, exc.__traceback__)
-        trace.extend(line.rstrip() for line in formatted)
+        error = build_error(exc)
+    elapsed_ms = (time.perf_counter() - start_time) * 1000
 
     exchanges = client._http.exchanges[start_index:]
-    trace.extend(_catalog_trace(item) for item in catalog)
+    trace: list[str] = [_catalog_trace(item) for item in catalog]
+    trace.append(f"실행 시간: {elapsed_ms:.1f}ms")
+    if error is not None:
+        trace.append(f"실행 실패: {error['type']}: {error['message']}")
     trace.extend(_exchange_trace(exchange) for exchange in exchanges)
     last_exchange = exchanges[-1] if exchanges else None
 
@@ -242,6 +260,33 @@ def redact_sensitive(value: Any) -> Any:
     return value
 
 
+def build_error(exc: Exception) -> dict[str, Any]:
+    """예외를 UI/fixture에 저장 가능한 구조화된 오류 dict로 변환합니다.
+
+    항상 ``type``/``message``/``traceback``을 담고, ``AirKoreaError`` 하위
+    타입이면 ``failure_kind``/``retryable``과, 메시지에서 뽑아낼 수 있으면
+    ``status_code``/``result_code``도 추가합니다.
+    """
+
+    message = str(exc)
+    payload: dict[str, Any] = {
+        "type": type(exc).__name__,
+        "message": message,
+        "traceback": "".join(traceback.format_exception(type(exc), exc, exc.__traceback__)),
+    }
+    if isinstance(exc, AirKoreaError):
+        failure_kind = _FAILURE_KIND_BY_EXCEPTION.get(type(exc).__name__)
+        payload["failure_kind"] = failure_kind
+        payload["retryable"] = failure_kind in _RETRYABLE_FAILURE_KINDS
+        status_match = _STATUS_CODE_PATTERN.search(message)
+        if status_match:
+            payload["status_code"] = int(status_match.group(1))
+        result_match = _RESULT_CODE_PATTERN.search(message)
+        if result_match:
+            payload["result_code"] = result_match.group(1)
+    return cast(dict[str, Any], redact_sensitive(payload))
+
+
 def slugify(value: str) -> str:
     """case name을 파일명에 쓸 수 있는 짧은 slug로 변환합니다."""
 
@@ -306,6 +351,7 @@ __all__ = [
     "DEBUGGABLE_METHODS",
     "DEFAULT_ASSERTION",
     "DebugRun",
+    "build_error",
     "jsonable",
     "load_debug_fixture",
     "redact_sensitive",

@@ -1,50 +1,47 @@
-"""AirKorea fixture 디버그 UI."""
+"""Streamlit 기반 AirKorea API 디버그/fixture 뷰어."""
+# ruff: noqa: E402,I001
 
 from __future__ import annotations
 
+import inspect
 import json
 import sys
 from pathlib import Path
 from typing import Any
 
-import streamlit as st
-
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
+for module_name, module in list(sys.modules.items()):
+    if module_name != "airkorea" and not module_name.startswith("airkorea."):
+        continue
+    module_file = getattr(module, "__file__", None)
+    if module_file is not None and not Path(module_file).resolve().is_relative_to(SRC):
+        del sys.modules[module_name]
 
-from airkorea import (  # noqa: E402
+try:
+    import pandas as pd
+    import streamlit as st
+except ModuleNotFoundError as exc:  # pragma: no cover - 선택 실행 도구
+    raise SystemExit('Streamlit UI를 쓰려면 `pip install -e ".[debug-ui]"`를 실행하세요.') from exc
+
+from airkorea import (
+    DEBUGGABLE_METHODS,
     AirKoreaClient,
+    ParamSpec,
     __version__,
     api_catalog_dicts,
+    api_catalog_params_for_method,
     jsonable,
     load_service_key,
     normalize_service_key,
     run_debug_method,
     save_debug_fixture,
 )
-from airkorea.debug import DEBUGGABLE_METHODS  # noqa: E402
 
-SIDO_OPTIONS = [
-    "서울",
-    "부산",
-    "대구",
-    "인천",
-    "광주",
-    "대전",
-    "울산",
-    "경기",
-    "강원",
-    "충북",
-    "충남",
-    "전북",
-    "전남",
-    "경북",
-    "경남",
-    "제주",
-    "세종",
-]
+DATA_SOURCE = "AirKorea (data.go.kr)"
+DATA_SOURCES = (DATA_SOURCE,)
 
 
 def main() -> None:
@@ -55,12 +52,18 @@ def main() -> None:
     method_options = _method_options(catalog_rows)
 
     with st.sidebar:
+        st.subheader("Data source")
+        data_source = st.selectbox("Data source", DATA_SOURCES)
+        st.caption(f"{data_source}를 통해 제공되는 API 목록입니다.")
+
         st.subheader("API")
         selected_function = st.selectbox("API", method_options)
         selected_catalog = _catalog_for_method(catalog_rows, selected_function)
-        st.caption("API full name")
-        st.write(_api_full_name(selected_function, selected_catalog))
-        st.caption(_api_description(selected_function, selected_catalog))
+
+        what_it_does, return_desc = _api_captions(selected_function)
+        st.caption(what_it_does)
+        if return_desc:
+            st.caption(return_desc)
 
         loaded_key = load_service_key()
         st.subheader("Environment")
@@ -88,7 +91,14 @@ def main() -> None:
                 st.warning("DATA_GO_KR_SERVICE_KEY 값을 찾지 못했습니다.")
         _service_key_links(selected_catalog)
 
-        timeout = st.number_input("Timeout", min_value=1.0, max_value=60.0, value=10.0)
+        timeout = st.number_input(
+            "Timeout",
+            min_value=1.0,
+            max_value=60.0,
+            value=10.0,
+            step=1.0,
+            help="API 요청 timeout seconds입니다.",
+        )
         fixture_base_dir = _fixture_base_dir_sidebar()
 
     tabs = st.tabs(
@@ -104,6 +114,7 @@ def main() -> None:
 
     with tabs[0]:
         _raw_response_tab(
+            data_source,
             selected_function,
             selected_catalog,
             catalog_rows,
@@ -111,18 +122,36 @@ def main() -> None:
             float(timeout),
         )
     with tabs[1]:
-        _pydantic_model_tab(selected_function)
+        _pydantic_model_tab(data_source, selected_function)
     with tabs[2]:
-        _processed_result_tab(selected_function)
+        _processed_result_tab(data_source, selected_function)
     with tabs[3]:
-        _validation_errors_tab(selected_function)
+        _validation_errors_tab(data_source, selected_function)
     with tabs[4]:
-        _debug_trace_tab(catalog_rows, selected_function, selected_catalog)
+        _debug_trace_tab(catalog_rows, data_source, selected_function, selected_catalog)
     with tabs[5]:
-        _fixture_tab(_current_debug_run(selected_function), fixture_base_dir)
+        _fixture_tab(_current_debug_run(data_source, selected_function), fixture_base_dir)
+
+
+def _api_captions(function_name: str) -> tuple[str, str]:
+    """(무엇을 하는 API인지, 어떤 데이터를 반환하는지) 캡션 2줄을 함수 docstring/타입에서 만듭니다.
+
+    함수 이름별 하드코딩 설명 대신 ``AirKoreaClient``의 실제 docstring과 반환
+    타입 annotation을 그대로 읽어 새 method가 추가돼도 따로 손댈 필요가 없습니다.
+    """
+
+    method = getattr(AirKoreaClient, function_name, None)
+    if method is None:
+        return (f"{function_name} API입니다.", "")
+    what_it_does = inspect.getdoc(method) or f"{function_name} API입니다."
+    annotation = inspect.signature(method).return_annotation
+    if annotation is inspect.Signature.empty:
+        return (what_it_does, "")
+    return (what_it_does, f"반환 타입: {annotation}")
 
 
 def _run(
+    data_source: str,
     selected_function: str,
     input_data: dict[str, Any],
     service_key: str | None,
@@ -130,19 +159,21 @@ def _run(
 ) -> None:
     normalized_key = normalize_service_key(service_key or "")
     if not normalized_key:
-        st.session_state.pop("debug_run", None)
+        st.session_state.pop("last_run", None)
         st.error("서비스키가 필요합니다. 환경변수, .env, 또는 사이드바 입력을 확인하세요.")
         return
 
     client = AirKoreaClient(
-        normalized_key,
+        service_key=normalized_key,
         timeout=timeout,
         retries=0,
     )
-    st.session_state.debug_run = run_debug_method(client, selected_function, input_data)
+    run = run_debug_method(client, selected_function, input_data)
+    _store_debug_run(data_source, selected_function, run)
 
 
 def _raw_response_tab(
+    data_source: str,
     selected_function: str,
     selected_catalog: list[dict[str, Any]],
     catalog_rows: list[dict[str, Any]],
@@ -168,43 +199,43 @@ def _raw_response_tab(
         if missing:
             st.error("필수 파라미터를 입력하세요: " + ", ".join(missing))
         else:
-            _run(selected_function, input_data, service_key, timeout)
+            _run(data_source, selected_function, input_data, service_key, timeout)
 
-    debug_run = _current_debug_run(selected_function)
+    debug_run = _current_debug_run(data_source, selected_function)
     if debug_run is None:
         st.info("Run selected API를 누르면 raw response를 확인합니다.")
         return
 
     if debug_run.error:
         st.error(debug_run.error.get("message") or "API 실행 중 오류가 발생했습니다.")
-    st.json(debug_run.response)
+    st.json(jsonable(debug_run.response))
 
 
 def _request_form(
     selected_function: str,
     catalog_rows: list[dict[str, Any]],
 ) -> tuple[bool, dict[str, Any], list[str]]:
-    key_prefix = f"request:{selected_function}"
+    key_prefix = f"{DATA_SOURCE}:{selected_function}"
 
-    with st.form(f"request-form:{selected_function}"):
+    with st.form(f"request-form:{key_prefix}"):
         if selected_function == "call":
             st.subheader("Required parameters")
-            required_specs: list[dict[str, Any]] = []
+            required_specs: tuple[ParamSpec, ...] = ()
             form_input = _call_input_form(catalog_rows)
         else:
-            specs = _parameter_specs(selected_function)
-            required_specs = [spec for spec in specs if spec.get("required")]
-            optional_specs = [spec for spec in specs if not spec.get("required")]
+            specs = api_catalog_params_for_method(selected_function)
+            required_specs = tuple(spec for spec in specs if spec.required)
+            optional_specs = tuple(spec for spec in specs if not spec.required)
             form_input = {}
 
             st.subheader("Required parameters")
             if required_specs:
-                form_input.update(_render_specs(selected_function, required_specs))
+                form_input.update(_render_param_grid(required_specs, key_prefix=key_prefix))
             else:
                 st.caption("이 API는 라이브러리 호출 기준의 필수 파라미터가 없습니다.")
 
             st.subheader("Optional parameters")
-            form_input.update(_render_specs(selected_function, optional_specs))
+            form_input.update(_render_param_grid(optional_specs, key_prefix=key_prefix))
 
         extra_text = st.text_area(
             "Extra kwargs JSON",
@@ -218,11 +249,73 @@ def _request_form(
     extra_params = _parse_extra_params(extra_text)
     input_data = {**form_input, **extra_params}
     missing = [
-        spec["name"]
+        spec.name
         for spec in required_specs
-        if not str(input_data.get(spec["name"], "")).strip()
+        if not str(input_data.get(spec.name, "")).strip()
     ]
     return submitted, input_data, missing
+
+
+def _render_param_grid(specs: tuple[ParamSpec, ...], *, key_prefix: str) -> dict[str, Any]:
+    """``ParamSpec.kind``만으로 위젯을 고르는 제네릭 렌더러입니다.
+
+    함수 이름을 분기하지 않고, 카탈로그가 준 명세(``kind``/``options``/``default``)로만
+    위젯 종류를 결정합니다.
+    """
+
+    values: dict[str, Any] = {}
+    if not specs:
+        st.caption("해당 파라미터가 없습니다.")
+        return values
+
+    columns = st.columns(2)
+    for index, spec in enumerate(specs):
+        with columns[index % 2]:
+            value = _param_widget(spec, key=f"{key_prefix}:param:{spec.name}")
+            if value is not None and value != "":
+                values[spec.name] = value
+    return values
+
+
+def _param_widget(spec: ParamSpec, *, key: str) -> Any:
+    if spec.kind == "select":
+        options = list(spec.options)
+        index = options.index(spec.default) if spec.default in options else 0
+        value = st.selectbox(spec.label, options, index=index, key=key, help=spec.help)
+        return None if value == "" else value
+
+    if spec.kind == "int":
+        min_value = int(spec.min_value) if spec.min_value is not None else 1
+        default = int(spec.default) if spec.default is not None else min_value
+        return int(
+            st.number_input(
+                spec.label,
+                min_value=min_value,
+                value=default,
+                step=1,
+                key=key,
+                help=spec.help,
+            )
+        )
+
+    if spec.kind == "float":
+        default_float = float(spec.default) if spec.default is not None else 0.0
+        return float(
+            st.number_input(
+                spec.label,
+                value=default_float,
+                key=key,
+                help=spec.help,
+            )
+        )
+
+    text_value = st.text_input(
+        spec.label,
+        value=str(spec.default or ""),
+        key=key,
+        help=spec.help,
+    )
+    return text_value.strip()
 
 
 def _parse_extra_params(text: str) -> dict[str, Any]:
@@ -237,13 +330,24 @@ def _parse_extra_params(text: str) -> dict[str, Any]:
     return parsed
 
 
-def _current_debug_run(selected_function: str) -> Any | None:
-    debug_run = st.session_state.get("debug_run")
-    if debug_run is None:
+def _store_debug_run(data_source: str, selected_function: str, run: Any) -> None:
+    st.session_state["last_run"] = {
+        "selection_key": _selection_key(data_source, selected_function),
+        "run": run,
+    }
+
+
+def _current_debug_run(data_source: str, selected_function: str) -> Any | None:
+    stored = st.session_state.get("last_run")
+    if not isinstance(stored, dict):
         return None
-    if getattr(debug_run, "function", None) != selected_function:
+    if stored.get("selection_key") != _selection_key(data_source, selected_function):
         return None
-    return debug_run
+    return stored.get("run")
+
+
+def _selection_key(data_source: str, selected_function: str) -> str:
+    return f"{data_source}:{selected_function}"
 
 
 def _fixture_tab(debug_run: Any, fixture_base_dir: str) -> None:
@@ -293,8 +397,8 @@ def _fixture_tab(debug_run: Any, fixture_base_dir: str) -> None:
         st.success(f"Saved: {path}")
 
 
-def _pydantic_model_tab(selected_function: str) -> None:
-    debug_run = _current_debug_run(selected_function)
+def _pydantic_model_tab(data_source: str, selected_function: str) -> None:
+    debug_run = _current_debug_run(data_source, selected_function)
     if debug_run is None:
         st.info("Raw Response 탭에서 선택한 API를 실행하면 여기에서 Pydantic 모델을 확인합니다.")
         return
@@ -303,26 +407,26 @@ def _pydantic_model_tab(selected_function: str) -> None:
     st.json(jsonable(debug_run.parsed) if debug_run.parsed is not None else {})
 
 
-def _processed_result_tab(selected_function: str) -> None:
-    debug_run = _current_debug_run(selected_function)
+def _processed_result_tab(data_source: str, selected_function: str) -> None:
+    debug_run = _current_debug_run(data_source, selected_function)
     if debug_run is None:
         st.info("Raw Response 탭에서 API를 실행하면 처리된 row preview를 표시합니다.")
         return
 
     processed = jsonable(debug_run.processed)
-    rows = _table_rows(processed)
-    if rows:
-        st.dataframe(rows, width="stretch", hide_index=True)
+    if isinstance(processed, list) and processed:
+        st.dataframe(pd.json_normalize(processed, sep="."), width="stretch", hide_index=True)
     else:
         st.json(processed if processed is not None else {})
 
 
-def _validation_errors_tab(selected_function: str) -> None:
-    debug_run = _current_debug_run(selected_function)
+def _validation_errors_tab(data_source: str, selected_function: str) -> None:
+    debug_run = _current_debug_run(data_source, selected_function)
     if debug_run is None:
         st.info("아직 실행된 API가 없습니다.")
         return
     if debug_run.error:
+        st.error(debug_run.error.get("message") or "API 실행 중 오류가 발생했습니다.")
         st.json(debug_run.error)
         return
     st.success("오류 없이 실행됐습니다.")
@@ -330,10 +434,11 @@ def _validation_errors_tab(selected_function: str) -> None:
 
 def _debug_trace_tab(
     catalog_rows: list[dict[str, Any]],
+    data_source: str,
     selected_function: str,
     selected_catalog: list[dict[str, Any]],
 ) -> None:
-    debug_run = _current_debug_run(selected_function)
+    debug_run = _current_debug_run(data_source, selected_function)
 
     st.subheader("Catalog")
     st.dataframe(catalog_rows, width="stretch", hide_index=True)
@@ -359,91 +464,6 @@ def _debug_trace_tab(
         st.code("\n".join(debug_run.trace) or "trace 없음")
     else:
         st.info("아직 실행 trace가 없습니다.")
-
-
-def _render_specs(
-    method_name: str,
-    specs: list[dict[str, Any]],
-) -> dict[str, Any]:
-    values: dict[str, Any] = {}
-    if not specs:
-        st.caption("해당 파라미터가 없습니다.")
-        return values
-
-    columns = st.columns(2)
-    for index, spec in enumerate(specs):
-        with columns[index % 2]:
-            value = _param_widget(method_name, spec)
-            if value is not None and value != "":
-                values[spec["name"]] = value
-    return values
-
-
-def _param_widget(
-    method_name: str,
-    spec: dict[str, Any],
-) -> Any:
-    key = f"param_{method_name}_{spec['name']}"
-    label = spec["label"]
-    help_text = spec.get("help")
-    kind = spec.get("kind", "text")
-    default = spec.get("default")
-
-    if kind == "select":
-        options = spec["options"]
-        index = options.index(default) if default in options else 0
-        value = st.selectbox(
-            label,
-            options,
-            index=index,
-            key=key,
-            help=help_text,
-        )
-        return None if value == "" else value
-
-    if kind == "int":
-        return int(
-            st.number_input(
-                label,
-                min_value=spec.get("min_value", 1),
-                value=int(default if default is not None else spec.get("min_value", 1)),
-                step=1,
-                key=key,
-                help=help_text,
-            )
-        )
-
-    if kind == "float":
-        return float(
-            st.number_input(
-                label,
-                value=float(default if default is not None else 0.0),
-                key=key,
-                help=help_text,
-            )
-        )
-
-    if kind == "json":
-        text = st.text_area(
-            label,
-            value=json.dumps(default or {}, ensure_ascii=False, indent=2),
-            key=key,
-            help=help_text,
-        )
-        if not text.strip():
-            return None
-        try:
-            return json.loads(text)
-        except json.JSONDecodeError as exc:
-            st.error(f"{label} JSON 오류: {exc}")
-            return None
-
-    return st.text_input(
-        label,
-        value=str(default or ""),
-        key=key,
-        help=help_text,
-    ).strip()
 
 
 def _call_input_form(catalog_rows: list[dict[str, Any]]) -> dict[str, Any]:
@@ -511,19 +531,6 @@ def _call_input_form(catalog_rows: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def _table_rows(value: Any) -> list[dict[str, Any]]:
-    if isinstance(value, list) and all(isinstance(item, dict) for item in value):
-        return value
-    if isinstance(value, dict):
-        items = value.get("items")
-        if isinstance(items, list) and all(isinstance(item, dict) for item in items):
-            return items
-        raw_items = value.get("raw", {}).get("body", {}).get("items")
-        if isinstance(raw_items, list) and all(isinstance(item, dict) for item in raw_items):
-            return raw_items
-    return []
-
-
 def _fixture_base_dir_sidebar() -> str:
     st.subheader("Fixtures")
     candidates = _fixture_dir_candidates()
@@ -543,7 +550,7 @@ def _fixture_dir_candidates() -> list[Path]:
     preferred = [
         ROOT / "tests" / "fixtures",
         ROOT / "tests",
-        ROOT / "debug_ui",
+        ROOT / "examples",
         ROOT,
     ]
     candidates: list[Path] = []
@@ -583,20 +590,6 @@ def _api_full_name(selected_function: str, catalog_rows: list[dict[str, Any]]) -
         f"{row['dataset_name']} / {row['service_name']} / {row['endpoint']}"
         for row in catalog_rows
     )
-
-
-def _api_description(selected_function: str, catalog_rows: list[dict[str, Any]]) -> str:
-    if selected_function == "call":
-        return "service_name과 endpoint를 직접 선택해 AirKorea endpoint를 호출합니다."
-    if len(catalog_rows) > 1:
-        return (
-            f"{selected_function} 함수는 {len(catalog_rows)}개 AirKorea endpoint를 "
-            "조합해 호출합니다."
-        )
-    if catalog_rows:
-        row = catalog_rows[0]
-        return f"{row['dataset_name']}의 {row['endpoint']} endpoint입니다."
-    return f"{selected_function} API입니다."
 
 
 def _call_catalog_for_input(
@@ -645,255 +638,6 @@ def _service_key_links(catalog_rows: list[dict[str, Any]]) -> None:
         st.link_button(f"서비스키 신청/확인: {label}", url)
 
 
-def _parameter_specs(method_name: str) -> list[dict[str, Any]]:
-    common_page = [
-        _int_param("page_no", "page_no", default=1, help_text="AirKorea pageNo"),
-        _int_param(
-            "num_of_rows",
-            "num_of_rows",
-            default=5,
-            help_text="AirKorea numOfRows",
-            include=True,
-        ),
-    ]
-    data_term = _select_param(
-        "data_term",
-        "data_term",
-        ["DAILY", "MONTH", "3MONTH"],
-        default="DAILY",
-    )
-    ver = _text_param("ver", "ver", default="1.3")
-
-    specs: dict[str, list[dict[str, Any]]] = {
-        "station_measurements": [
-            _text_param("station_name", "station_name", required=True, default="종로구"),
-            data_term,
-            *common_page,
-            ver,
-        ],
-        "latest_station_measurement": [
-            _text_param("station_name", "station_name", required=True, default="종로구"),
-            data_term,
-            ver,
-        ],
-        "sido_measurements": [
-            _select_param("sido_name", "sido_name", SIDO_OPTIONS, required=True, default="서울"),
-            *common_page,
-            ver,
-        ],
-        "unhealthy_stations": common_page,
-        "forecast_notices": [
-            _text_param("search_date", "search_date", help_text="YYYY-MM-DD"),
-            _select_param("inform_code", "inform_code", ["", "PM10", "PM25", "O3"]),
-            *common_page,
-        ],
-        "weekly_forecasts": [
-            _text_param("search_date", "search_date", help_text="YYYY-MM-DD"),
-            *common_page,
-        ],
-        "stations": [
-            _text_param("addr", "addr", default="서울", include=True),
-            _text_param("station_name", "station_name"),
-            *common_page,
-        ],
-        "nearby_stations": [
-            _float_param("lat", "lat", required=True, default=37.5665),
-            _float_param("lon", "lon", required=True, default=126.9780),
-            ver,
-        ],
-        "tm_coordinates": [
-            _text_param("umd_name", "umd_name", required=True, default="혜화동"),
-            *common_page,
-        ],
-        "measurement_near": [
-            _float_param("lat", "lat", required=True, default=37.5665),
-            _float_param("lon", "lon", required=True, default=126.9780),
-            data_term,
-            ver,
-        ],
-        "sido_average_stats": [
-            _select_param(
-                "item_code",
-                "item_code",
-                ["PM10", "PM25", "O3", "NO2", "CO", "SO2"],
-                required=True,
-                default="PM25",
-            ),
-            _select_param("data_gubun", "data_gubun", ["HOUR", "DAILY"], default="HOUR"),
-            _select_param(
-                "search_condition",
-                "search_condition",
-                ["WEEK", "MONTH"],
-                default="WEEK",
-            ),
-            *common_page,
-        ],
-        "city_average_stats": [
-            _select_param("sido_name", "sido_name", SIDO_OPTIONS, required=True, default="서울"),
-            _select_param("item_code", "item_code", ["", "PM10", "PM25", "O3", "NO2", "CO", "SO2"]),
-            _select_param("data_gubun", "data_gubun", ["", "HOUR", "DAILY"]),
-            _select_param(
-                "search_condition",
-                "search_condition",
-                ["HOUR", "WEEK", "MONTH"],
-                default="HOUR",
-            ),
-            *common_page,
-        ],
-        "station_daily_stats": [
-            _text_param(
-                "inquiry_begin_date",
-                "inquiry_begin_date",
-                required=True,
-                default="2026-04-01",
-            ),
-            _text_param(
-                "inquiry_end_date",
-                "inquiry_end_date",
-                required=True,
-                default="2026-04-30",
-            ),
-            _text_param("station_name", "station_name"),
-            *common_page,
-        ],
-        "station_monthly_stats": [
-            _text_param(
-                "inquiry_begin_date",
-                "inquiry_begin_date",
-                required=True,
-                default="2026-04-01",
-            ),
-            _text_param(
-                "inquiry_end_date",
-                "inquiry_end_date",
-                required=True,
-                default="2026-04-30",
-            ),
-            _text_param("station_name", "station_name"),
-            *common_page,
-        ],
-        "ozone_advisories": [
-            _text_param("year", "year", default="2026", include=True),
-            *common_page,
-        ],
-        "yellow_dust_advisories": [
-            _text_param("year", "year", default="2026", include=True),
-            *common_page,
-        ],
-        "dust_alarms": [
-            _text_param("year", "year", required=True, default="2026"),
-            _select_param("item_code", "item_code", ["", "PM10", "PM25"]),
-            *common_page,
-        ],
-        "traffic_stats": [
-            _text_param("search_date", "search_date", required=True, default="2026-04-30"),
-            *common_page,
-        ],
-        "high_pm25_forecasts": [
-            _text_param("search_date", "search_date", required=True, default="2026-04-30"),
-            *common_page,
-        ],
-        "cai_measurements": [
-            _text_param("station_name", "station_name"),
-            *common_page,
-        ],
-        "background_concentrations": [
-            _text_param(
-                "measurement_date",
-                "measurement_date",
-                required=True,
-                default="2022-01-03",
-            ),
-            _text_param("station_name", "station_name", required=True, default="s0002"),
-            *common_page,
-        ],
-        "english_measurements": [
-            _text_param("station_name", "station_name"),
-            *common_page,
-        ],
-        "english_stations": [
-            _text_param("station_name", "station_name"),
-            _text_param("road_address", "road_address"),
-            *common_page,
-        ],
-    }
-    return specs.get(method_name, [])
-
-
-def _text_param(
-    name: str,
-    label: str,
-    *,
-    required: bool = False,
-    default: str = "",
-    include: bool = False,
-    help_text: str | None = None,
-) -> dict[str, Any]:
-    return {
-        "name": name,
-        "label": label,
-        "kind": "text",
-        "required": required,
-        "default": default,
-        "include_by_default": include,
-        "help": help_text,
-    }
-
-
-def _select_param(
-    name: str,
-    label: str,
-    options: list[str],
-    *,
-    required: bool = False,
-    default: str = "",
-) -> dict[str, Any]:
-    return {
-        "name": name,
-        "label": label,
-        "kind": "select",
-        "required": required,
-        "default": default,
-        "options": options,
-    }
-
-
-def _int_param(
-    name: str,
-    label: str,
-    *,
-    default: int,
-    include: bool = False,
-    help_text: str | None = None,
-) -> dict[str, Any]:
-    return {
-        "name": name,
-        "label": label,
-        "kind": "int",
-        "required": False,
-        "default": default,
-        "include_by_default": include,
-        "help": help_text,
-        "min_value": 1,
-    }
-
-
-def _float_param(
-    name: str,
-    label: str,
-    *,
-    required: bool,
-    default: float,
-) -> dict[str, Any]:
-    return {
-        "name": name,
-        "label": label,
-        "kind": "float",
-        "required": required,
-        "default": default,
-    }
-
-
 def _default_call_params(endpoint: str) -> dict[str, Any]:
     defaults = {
         "getMsrstnList": {"addr": "서울"},
@@ -907,24 +651,6 @@ def _default_call_params(endpoint: str) -> dict[str, Any]:
         "getTMStdrCrdnt": {"umdName": "혜화동"},
     }
     return defaults.get(endpoint, {})
-
-
-def _default_input(method_name: str) -> dict[str, Any]:
-    defaults: dict[str, dict[str, Any]] = {
-        "station_measurements": {"station_name": "종로구", "num_of_rows": 1},
-        "latest_station_measurement": {"station_name": "종로구"},
-        "sido_measurements": {"sido_name": "서울", "num_of_rows": 5},
-        "stations": {"addr": "서울", "num_of_rows": 5},
-        "nearby_stations": {"lat": 37.5665, "lon": 126.9780},
-        "forecast_notices": {"num_of_rows": 5},
-        "call": {
-            "service_name": "MsrstnInfoInqireSvc",
-            "endpoint": "getMsrstnList",
-            "params": {"addr": "서울"},
-            "num_of_rows": 5,
-        },
-    }
-    return defaults.get(method_name, {})
 
 
 if __name__ == "__main__":
