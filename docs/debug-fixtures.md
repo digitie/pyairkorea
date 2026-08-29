@@ -29,7 +29,7 @@ debug_run = run_debug_method(
 debug_run.request    # 인증키가 제거된 요청 정보
 debug_run.response   # 저장 가능한 response.body
 debug_run.parsed     # Pydantic 모델 또는 모델 목록
-debug_run.processed  # 현재는 parsed와 동일한 typed 결과
+debug_run.processed  # call()은 AirKoreaPage.items를 편 list, 그 외는 parsed와 동일
 debug_run.catalog    # 데이터셋명, endpoint, 서비스키 링크
 debug_run.error      # 검증 오류나 예외 정보
 debug_run.trace      # HTTP 호출/trace 요약

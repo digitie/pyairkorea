@@ -2,9 +2,51 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any
+
+from airkorea.codes import (
+    DataTerm,
+    InformCode,
+    Pollutant,
+    SidoName,
+    StatsDataGubun,
+    StatsSearchCondition,
+)
+
+
+@dataclass(frozen=True)
+class ParamSpec:
+    """디버그 UI가 위젯 하나를 자동 생성하기 위해 쓰는 요청 파라미터 명세.
+
+    ``kind``는 ``"text"``, ``"int"``, ``"float"``, ``"select"`` 중 하나이며,
+    ``select``는 ``options``(대개 ``codes.py``의 Enum 값)를 selectbox 선택지로 씁니다.
+    """
+
+    name: str
+    label: str
+    kind: str = "text"
+    required: bool = False
+    default: Any = None
+    help: str | None = None
+    options: tuple[str, ...] = ()
+    min_value: float | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        """Streamlit 위젯 렌더링에 바로 쓸 수 있는 dict를 반환합니다."""
+
+        return {
+            "name": self.name,
+            "label": self.label,
+            "kind": self.kind,
+            "required": self.required,
+            "default": self.default,
+            "help": self.help,
+            "options": list(self.options),
+            "min_value": self.min_value,
+        }
 
 
 @dataclass(frozen=True)
@@ -20,6 +62,8 @@ class ApiCatalogEntry:
     portal_url: str
     service_key_url: str
     service_key_param: str = "serviceKey"
+    required_params: tuple[str, ...] = ()
+    optional_params: tuple[str, ...] = ()
 
     @property
     def url(self) -> str:
@@ -41,6 +85,8 @@ class ApiCatalogEntry:
             "url": self.url,
             "portal_url": self.portal_url,
             "service_key_url": self.service_key_url,
+            "required_params": list(self.required_params),
+            "optional_params": list(self.optional_params),
         }
 
 
@@ -124,6 +170,238 @@ _SERVICE_INFO: dict[str, dict[str, str]] = {
     },
 }
 
+def _text(
+    name: str,
+    *,
+    required: bool = False,
+    default: str = "",
+    help_text: str | None = None,
+) -> ParamSpec:
+    return ParamSpec(
+        name=name,
+        label=name,
+        kind="text",
+        required=required,
+        default=default,
+        help=help_text,
+    )
+
+
+def _int(
+    name: str,
+    *,
+    default: int,
+    min_value: int = 1,
+    help_text: str | None = None,
+) -> ParamSpec:
+    return ParamSpec(
+        name=name,
+        label=name,
+        kind="int",
+        required=False,
+        default=default,
+        help=help_text,
+        min_value=min_value,
+    )
+
+
+def _float(name: str, *, required: bool, default: float) -> ParamSpec:
+    return ParamSpec(name=name, label=name, kind="float", required=required, default=default)
+
+
+def _select(
+    name: str,
+    options: Iterable[str],
+    *,
+    required: bool = False,
+    default: str = "",
+    help_text: str | None = None,
+) -> ParamSpec:
+    return ParamSpec(
+        name=name,
+        label=name,
+        kind="select",
+        required=required,
+        default=default,
+        options=tuple(options),
+        help=help_text,
+    )
+
+
+def _enum_values(enum_cls: type[Enum], *, exclude: Iterable[Enum] = ()) -> tuple[str, ...]:
+    excluded = set(exclude)
+    return tuple(str(member.value) for member in enum_cls if member not in excluded)
+
+
+def _optional_options(values: Iterable[str]) -> tuple[str, ...]:
+    return ("", *values)
+
+
+_COMMON_PAGE_PARAMS = (
+    _int("page_no", default=1, help_text="AirKorea pageNo"),
+    _int("num_of_rows", default=5, help_text="AirKorea numOfRows"),
+)
+_SIDO_OPTIONS = _enum_values(SidoName)
+_DATA_TERM_OPTIONS = _enum_values(DataTerm)
+_STATS_DATA_GUBUN_OPTIONS = _enum_values(StatsDataGubun)
+_STATS_SEARCH_CONDITION_OPTIONS = _enum_values(StatsSearchCondition)
+_STATS_POLLUTANT_OPTIONS = _enum_values(Pollutant, exclude=(Pollutant.KHAI,))
+_ALARM_POLLUTANT_OPTIONS = (Pollutant.PM10.value, Pollutant.PM25.value)
+
+# public method 이름별 요청 파라미터 명세. Streamlit 디버그 UI가 이 테이블에서
+# 위젯을 자동 생성하므로, 함수 이름을 분기하는 하드코딩된 폼 코드가 필요 없습니다.
+_METHOD_PARAM_SPECS: dict[str, tuple[ParamSpec, ...]] = {
+    "station_measurements": (
+        _text("station_name", required=True, default="종로구"),
+        _select("data_term", _DATA_TERM_OPTIONS, default=DataTerm.DAILY.value),
+        *_COMMON_PAGE_PARAMS,
+        _text("ver", default="1.3"),
+    ),
+    "latest_station_measurement": (
+        _text("station_name", required=True, default="종로구"),
+        _select("data_term", _DATA_TERM_OPTIONS, default=DataTerm.DAILY.value),
+        _text("ver", default="1.3"),
+    ),
+    "sido_measurements": (
+        _select("sido_name", _SIDO_OPTIONS, required=True, default=SidoName.SEOUL.value),
+        *_COMMON_PAGE_PARAMS,
+        _text("ver", default="1.3"),
+    ),
+    "unhealthy_stations": _COMMON_PAGE_PARAMS,
+    "forecast_notices": (
+        _text("search_date", help_text="YYYY-MM-DD"),
+        _select("inform_code", _optional_options(_enum_values(InformCode))),
+        *_COMMON_PAGE_PARAMS,
+    ),
+    "weekly_forecasts": (
+        _text("search_date", help_text="YYYY-MM-DD"),
+        *_COMMON_PAGE_PARAMS,
+    ),
+    "stations": (
+        _text("addr", default="서울"),
+        _text("station_name"),
+        *_COMMON_PAGE_PARAMS,
+    ),
+    "nearby_stations": (
+        _float("lat", required=True, default=37.5665),
+        _float("lon", required=True, default=126.9780),
+        _text("ver"),
+    ),
+    "tm_coordinates": (
+        _text("umd_name", required=True, default="혜화동"),
+        *_COMMON_PAGE_PARAMS,
+    ),
+    "measurement_near": (
+        _float("lat", required=True, default=37.5665),
+        _float("lon", required=True, default=126.9780),
+        _select("data_term", _DATA_TERM_OPTIONS, default=DataTerm.DAILY.value),
+        _text("ver", default="1.3"),
+    ),
+    "sido_average_stats": (
+        _select(
+            "item_code",
+            _STATS_POLLUTANT_OPTIONS,
+            required=True,
+            default=Pollutant.PM25.value,
+        ),
+        _select("data_gubun", _STATS_DATA_GUBUN_OPTIONS, default=StatsDataGubun.HOUR.value),
+        _select(
+            "search_condition",
+            _STATS_SEARCH_CONDITION_OPTIONS,
+            default=StatsSearchCondition.WEEK.value,
+        ),
+        *_COMMON_PAGE_PARAMS,
+    ),
+    "city_average_stats": (
+        _select("sido_name", _SIDO_OPTIONS, required=True, default=SidoName.SEOUL.value),
+        _select("item_code", _optional_options(_STATS_POLLUTANT_OPTIONS)),
+        _select("data_gubun", _optional_options(_STATS_DATA_GUBUN_OPTIONS)),
+        _select(
+            "search_condition",
+            _STATS_SEARCH_CONDITION_OPTIONS,
+            default=StatsSearchCondition.HOUR.value,
+        ),
+        *_COMMON_PAGE_PARAMS,
+    ),
+    "station_daily_stats": (
+        _text("inquiry_begin_date", required=True, default="2026-04-01", help_text="YYYY-MM-DD"),
+        _text("inquiry_end_date", required=True, default="2026-04-30", help_text="YYYY-MM-DD"),
+        _text("station_name"),
+        *_COMMON_PAGE_PARAMS,
+    ),
+    "station_monthly_stats": (
+        _text("inquiry_begin_date", required=True, default="2026-04-01", help_text="YYYY-MM-DD"),
+        _text("inquiry_end_date", required=True, default="2026-04-30", help_text="YYYY-MM-DD"),
+        _text("station_name"),
+        *_COMMON_PAGE_PARAMS,
+    ),
+    "ozone_advisories": (
+        _text("year", default="2026"),
+        *_COMMON_PAGE_PARAMS,
+    ),
+    "yellow_dust_advisories": (
+        _text("year", default="2026"),
+        *_COMMON_PAGE_PARAMS,
+    ),
+    "dust_alarms": (
+        _text("year", required=True, default="2026"),
+        _select("item_code", _optional_options(_ALARM_POLLUTANT_OPTIONS)),
+        *_COMMON_PAGE_PARAMS,
+    ),
+    "traffic_stats": (
+        _text("search_date", required=True, default="2026-04-30", help_text="YYYY-MM-DD"),
+        *_COMMON_PAGE_PARAMS,
+    ),
+    "high_pm25_forecasts": (
+        _text("search_date", required=True, default="2026-04-30", help_text="YYYY-MM-DD"),
+        *_COMMON_PAGE_PARAMS,
+    ),
+    "cai_measurements": (
+        _text("station_name"),
+        *_COMMON_PAGE_PARAMS,
+    ),
+    "background_concentrations": (
+        _text("measurement_date", required=True, default="2022-01-03", help_text="YYYY-MM-DD"),
+        _text("station_name", required=True, default="s0002"),
+        *_COMMON_PAGE_PARAMS,
+    ),
+    "english_measurements": (
+        _text("station_name"),
+        *_COMMON_PAGE_PARAMS,
+    ),
+    "english_stations": (
+        _text("station_name"),
+        _text("road_address"),
+        *_COMMON_PAGE_PARAMS,
+    ),
+}
+
+
+def _param_names(specs: tuple[ParamSpec, ...], *, required: bool) -> tuple[str, ...]:
+    return tuple(spec.name for spec in specs if spec.required is required)
+
+
+def _required_optional_for_methods(
+    method_names: tuple[str, ...],
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """method 이름들이 공유하는 endpoint 하나에 대한 필수/선택 파라미터 이름 합집합을 반환합니다."""
+
+    required: set[str] = set()
+    optional: set[str] = set()
+    for method_name in method_names:
+        specs = _METHOD_PARAM_SPECS.get(method_name, ())
+        required.update(_param_names(specs, required=True))
+        optional.update(_param_names(specs, required=False))
+    optional -= required
+    return tuple(sorted(required)), tuple(sorted(optional))
+
+
+def api_catalog_params_for_method(method_name: str) -> tuple[ParamSpec, ...]:
+    """public method 이름에 대한 요청 파라미터 명세를 반환합니다."""
+
+    return _METHOD_PARAM_SPECS.get(method_name, ())
+
+
 _ENDPOINT_METHODS: dict[tuple[str, str], tuple[str, ...]] = {
     ("ArpltnInforInqireSvc", "getMsrstnAcctoRltmMesureDnsty"): (
         "station_measurements",
@@ -158,18 +436,30 @@ _ENDPOINT_METHODS: dict[tuple[str, str], tuple[str, ...]] = {
     ("atmstMsrstnInfoEngNm", "getList"): ("english_stations",),
 }
 
-_CATALOG = tuple(
-    ApiCatalogEntry(
-        dataset_name=_SERVICE_INFO[service_name]["dataset_name"],
-        service_label=_SERVICE_INFO[service_name]["service_label"],
+def _build_catalog_entry(
+    service_name: str,
+    endpoint: str,
+    method_names: tuple[str, ...],
+) -> ApiCatalogEntry:
+    required_params, optional_params = _required_optional_for_methods(method_names)
+    info = _SERVICE_INFO[service_name]
+    return ApiCatalogEntry(
+        dataset_name=info["dataset_name"],
+        service_label=info["service_label"],
         service_name=service_name,
-        base_url=_SERVICE_INFO[service_name]["base_url"],
+        base_url=info["base_url"],
         endpoint=endpoint,
         method_names=method_names,
-        portal_url=_SERVICE_INFO[service_name]["portal_url"],
-        service_key_url=_SERVICE_INFO[service_name]["portal_url"],
-        service_key_param=_SERVICE_INFO[service_name]["service_key_param"],
+        portal_url=info["portal_url"],
+        service_key_url=info["portal_url"],
+        service_key_param=info["service_key_param"],
+        required_params=required_params,
+        optional_params=optional_params,
     )
+
+
+_CATALOG = tuple(
+    _build_catalog_entry(service_name, endpoint, method_names)
     for (service_name, endpoint), method_names in _ENDPOINT_METHODS.items()
 )
 
@@ -242,10 +532,12 @@ def canonical_service_name_for_catalog(service_name: str) -> str:
 
 __all__ = [
     "ApiCatalogEntry",
+    "ParamSpec",
     "api_catalog",
     "api_catalog_dicts",
     "api_catalog_for_debug_input",
     "api_catalog_for_method",
+    "api_catalog_params_for_method",
     "canonical_service_name_for_catalog",
     "get_api_catalog_entry",
 ]
